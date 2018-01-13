@@ -2,6 +2,7 @@
 #include "stdint.h"
 #include "global.h"
 
+#define PIC_M_CTRL 0x20
 #define PIC_M_DATA 0x21
 #define PIC_S_CTRL 0xa0
 #define PIC_S_DATA 0xa1
@@ -24,7 +25,8 @@ extern intr_handler intr_entry_table[IDT_DESC_CNT];	    // 声明引用定义在
 
 
 /* 初始化可编程中断控制器8259A */
-static void pic_init(void) {
+static void pic_init()
+{
 
    /* 初始化主片 */
    outb (PIC_M_CTRL, 0x11);   // ICW1: 边沿触发,级联8259, 需要ICW4.

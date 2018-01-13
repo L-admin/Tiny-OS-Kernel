@@ -2,9 +2,9 @@
 #define __KERNEL_GLOBAL_H
 
 #define RPL0 0  // 选择子请求特权级 00b
-#define RPL0 1  // 选择子请求特权级 01b
-#define RPL0 2  // 选择子请求特权级 10b
-#define RPL0 3  // 选择子请求特权级 11b
+#define RPL1 1  // 选择子请求特权级 01b
+#define RPL2 2  // 选择子请求特权级 10b
+#define RPL3 3  // 选择子请求特权级 11b
 
 #define TI_GDT 0    // 选择子 TI 位,指示GDT
 #define TI_LDT 1    // 选择子 TI 位,指示IDT
