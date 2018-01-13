@@ -23,7 +23,7 @@ static inline void outb(uint16_t port, uint8_t data)
 
 
 /* 将addr处起始的word_cnt个字写入端口 */
-static inline void outsw()
+static inline void outsw(uint16_t port, const void* addr, uint32_t word_cnt)
 {
     asm volatile ("cld; rep outsw" : "+S" (addr), "+c" (word_cnt) : "d" (port));
 }
@@ -37,7 +37,7 @@ static inline uint8_t inb(uint6_t port)
 }
 
 /* 将从端口 port 读入的 word_cnt 个字写入 addr */
-static inline void insw()
+static inline void insw(uint16_t port, void* addr, uint32_t word_cnt)
 {
     asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 }
