@@ -23,8 +23,9 @@ section .data
 
                 add esp, 4      ; 跨过错误码
                 iret            ; 从中断返回
+
             section .data
-                dd intr%1lentry  ; 存储各个中断程序入口
+                dd intr%1entry  ; 存储各个中断程序入口
         %endmacro
 
 VECTOR 0x00, ZERO
