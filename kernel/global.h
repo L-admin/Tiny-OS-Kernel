@@ -9,10 +9,10 @@
 #define TI_GDT 0    // 选择子 TI 位,指示GDT
 #define TI_LDT 1    // 选择子 TI 位,指示IDT
 
-#define SELECTOR_K_CODE	   ((1 << 3) + (TI_GDT << 2) + RPL0)
-#define SELECTOR_K_DATA	   ((2 << 3) + (TI_GDT << 2) + RPL0)
-#define SELECTOR_K_STACK   SELECTOR_K_DATA
-#define SELECTOR_K_GS	   ((3 << 3) + (TI_GDT << 2) + RPL0)
+#define SELECTOR_K_CODE	   ((1 << 3) + (TI_GDT << 2) + RPL0)    // 0000_0000_0000_1000b
+#define SELECTOR_K_DATA	   ((2 << 3) + (TI_GDT << 2) + RPL0)    // 0000_0000_0001_0000b
+#define SELECTOR_K_STACK   SELECTOR_K_DATA                      // 0000_0000_0000_1000b
+#define SELECTOR_K_GS	   ((3 << 3) + (TI_GDT << 2) + RPL0)    // 0000_0000_0001_1000b
 
 //--------------   IDT描述符属性  ------------//
 #define	 IDT_DESC_P	 1      // 1b

@@ -52,7 +52,7 @@ static void pic_init()
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
 {
     p_gdesc->func_offset_low_word = (uint32_t)function & 0x0000FFFF; // 取出低16位
-    p_gdesc->selector = SELECTOR_K_CODE;    // 0000_0000_0001_0000b
+    p_gdesc->selector = SELECTOR_K_CODE;    // 0000_0000_0000_1000b
     p_gdesc->dcount = 0;                    // 0000_0000
     p_gdesc->attribute = attr;
     p_gdesc->func_offset_high_word = (uint32_t)function & 0xFFFF0000;   // 取出高16位

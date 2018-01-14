@@ -1,7 +1,7 @@
 #include "init.h"
 
 
-/*负责初始化所有模块 */
+/* 负责初始化所有模块 */
 void init_all()
 {
    put_str("init_all\n");
