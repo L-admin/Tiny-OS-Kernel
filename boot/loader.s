@@ -8,27 +8,35 @@ section loader vstart=LOADER_BASE_ADDR      ;0x900
 
     jmp loader_start                ; 0x900
 
+
+    ;;;;;;;;;;;;;;;;;;;; gdt描述符属性 ;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; 31-24 23  22  21  20  19-16 15 14-13  12  11-8  7-0
+    ;; 段基址  G  D/B  L  AVL 段界限  P   DPL   S  TYPE  段基址     ; 高32位
+    ;;
+    ;; 31-16   15-0
+    ;; 段基址   段界限                                             ; 低32位
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     GDT_BASE: dd 0x00000000         ; 0x903
               dd 0x00000000         ; 0x907
 
-    CODE_DESC: dd 0x0000FFFF        ; 0x90b
-               dd DESC_CODE_HIGH4   ; 0x90f
+    CODE_DESC: dd 0x0000FFFF        ; 0x90b  值: 0x0000FFFF(低32位)
+               dd DESC_CODE_HIGH4   ; 0x90f  值: 0x00CF9800(高32位) 段基址: 0x00000000 段界限值: 0xFFFFF
 
-    DATA_STACK_DESC: dd 0x0000FFFF  ; 0x913
-                     dd DESC_DATA_HIGH4 ;0x917
+    DATA_STACK_DESC: dd 0x0000FFFF  ; 0x913     值: 0x0000FFFF(低32位)
+                     dd DESC_DATA_HIGH4 ;0x917  值: 0x00CF9200(高32位) 段基址: 0x00000000 段界限值: 0xFFFFF
 
-    VIDEO_DESC: dd 0x80000007       ; 0x91b
-                dd DESC_VIDEO_HIGH4 ; 0x91f
+    VIDEO_DESC: dd 0x80000007       ; 0x91b  值: 0x80000007(低32位)
+                dd DESC_VIDEO_HIGH4 ; 0x91f  值: 0x00C09200(高32位) 段基址: 0x00008000 段界限值: 0x00007
    
     GDT_SIZE equ $ - GDT_BASE
     GDT_LIMIT equ GDT_SIZE - 1
 
     times 60 dq 0       ; 段描述符备用空间60*8=480
 
-    ; 构造选择子
-    SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0
-    SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0
-    SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
+    ; 构造选择子: 段描述符索引值(15-3), TI(2), RPL(2-0)
+    SELECTOR_CODE equ (0x0001 << 3) + TI_GDT + RPL0     ; 0000_0000 0000_1000, 第1个段描述符
+    SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0     ; 0000_0000 0001_0000, 第2个段描述符
+    SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0    ; 0000_0000 0001_1000, 第3个段描述符
 
     gdt_ptr dw GDT_LIMIT            ; 0xb03   2字节 GDT_LIMIT=31
             dd GDT_BASE             ; 0xb05   4字节
