@@ -20,13 +20,13 @@ section loader vstart=LOADER_BASE_ADDR      ;0x900
               dd 0x00000000         ; 0x907
 
     CODE_DESC: dd 0x0000FFFF        ; 0x90b  值: 0x0000FFFF(低32位)
-               dd DESC_CODE_HIGH4   ; 0x90f  值: 0x00CF9800(高32位) 段基址: 0x00000000 段界限值: 0xFFFFF
+               dd DESC_CODE_HIGH4   ; 0x90f  值: 0x00CF9800(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
 
     DATA_STACK_DESC: dd 0x0000FFFF  ; 0x913     值: 0x0000FFFF(低32位)
-                     dd DESC_DATA_HIGH4 ;0x917  值: 0x00CF9200(高32位) 段基址: 0x00000000 段界限值: 0xFFFFF
+                     dd DESC_DATA_HIGH4 ;0x917  值: 0x00CF9200(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
 
     VIDEO_DESC: dd 0x80000007       ; 0x91b  值: 0x80000007(低32位)
-                dd DESC_VIDEO_HIGH4 ; 0x91f  值: 0x00C09200(高32位) 段基址: 0x00008000 段界限值: 0x00007
+                dd DESC_VIDEO_HIGH4 ; 0x91f  值: 0x00C0920B(高32位)? 段基址: 0x000B8000 段界限值: 0x00007
    
     GDT_SIZE equ $ - GDT_BASE
     GDT_LIMIT equ GDT_SIZE - 1
@@ -62,13 +62,14 @@ loader_start:
 ;----------------------------------------------------------
 [bits 32]
 p_mode_start:
+    ; 初始化段寄存器
     mov ax, SELECTOR_DATA
     mov ds, ax
     mov es, ax
     mov ss, ax
-
+    ; 初始化栈段寄存器
     mov esp, LOADER_STACK_TOP
-
+    ; 初始化gs段寄存器(文本模式)
     mov ax, SELECTOR_VIDEO
     mov gs, ax
 

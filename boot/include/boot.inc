@@ -1,5 +1,5 @@
 ;----------- loader和kernel -----------
-LOADER_BASE_ADDR equ 0x900
+LOADER_BASE_ADDR equ 0x900              ; loader.bin 被加载到内存中的地址
 LOADER_STACK_TOP equ LOADER_BASE_ADDR
 
 LOADER_START_SECTOR equ 0x2     ; kernel loader 所在扇区号
@@ -60,19 +60,19 @@ DESC_TYPE_DATA equ  0010_00000000b  ; x=0,e=0,w=1,a=0 数据段不可执行,向�
 
 
 
-; 0000_0000 1100_1111 1001_1000 0000_0000 = = 0x00CF9800
+; 0000_0000 1100_1111 1001_1000 0000_0000 = = 0x00CF9800?
 DESC_CODE_HIGH4 equ (0x00 << 24) + DESC_G_4K + DESC_D_32 + \
                     DESC_L + DESC_AVL + DESC_LIMIT_CODE2 + \
                     DESC_P + DESC_DPL_0 + DESC_S_CODE + \
                     DESC_TYPE_CODE + 0x00
 
-; 0000_0000 1100_1111 1001_0010 0000_0000 = 0x00CF9200
+; 0000_0000 1100_1111 1001_0010 0000_0000 = 0x00CF9200?
 DESC_DATA_HIGH4 equ (0x00 << 24) + DESC_G_4K + DESC_D_32 + \
                     DESC_L + DESC_AVL + DESC_LIMIT_DATA2 + \
                     DESC_P + DESC_DPL_0 + DESC_S_DATA + \
                     DESC_TYPE_DATA + 0x00
 
-; 0000_0000 1100_0000 1001_0010 0000_0000 = 0x00C09200
+; 0000_0000 1100_0000 1001_0010 0000_0000 = 0x00C0920B?
 DESC_VIDEO_HIGH4 equ (0x00 << 24) + DESC_G_4K + DESC_D_32 + \
                     DESC_L + DESC_AVL + DESC_LIMIT_VIDEO2 + \
                     DESC_P + DESC_DPL_0 + DESC_S_DATA + \
