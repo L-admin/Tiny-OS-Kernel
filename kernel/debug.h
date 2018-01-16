@@ -18,5 +18,4 @@ void panic_spin(char *filename, int line, const char* func,
 #endif /*__NDEBUG */
 
 
-
 #endif /*__KERNEL_DEBUG_H*/
