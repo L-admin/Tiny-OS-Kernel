@@ -21,8 +21,11 @@ struct gate_desc
     uint16_t func_offset_high_word; /* 中断处理程序在目标代码段偏移量16-31位 */
 };
 
-static struct gate_desc idt[IDT_DESC_CNT];  // idt是中断描述符表,本质上就是个中断门描述符数组
-extern intr_handler intr_entry_table[IDT_DESC_CNT];	    // 声明引用定义在kernel.S中的中断处理函数入口数组
+static struct gate_desc idt[IDT_DESC_CNT];      // idt是中断描述符表,本质上就是个中断门描述符数组
+
+char* intr_name[IDT_DESC_CNT];  // 保存异常的名字，调试
+intr_handler idt_table[IDT_DESC_CNT];   // 定义中断处理程序指针数组
+extern intr_handler intr_entry_table[IDT_DESC_CNT]; // 声明引用定义在kernel.S中的中断处理函数入口数组
 
 
 /* 初始化可编程中断控制器8259A */
@@ -65,6 +68,50 @@ static void idt_desc_init()
     for (i = 0; i < IDT_DESC_CNT; i++)
         make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);    // IDT_DESC_ATTR_DPL0 = 1000_1110b
     put_str("   idt_desc_init done\n");
+}
+
+/* 通用中断处理函数 */
+static vopid general_init_hadnler(uint8_t vec_nr)
+{
+    if (vec_nr == 0x27 || vec_nr = 0x2f)
+    {
+        return;
+    }
+
+    put_str("init vector: 0x");
+    put_int(vec_nr);
+    put_char("\n");
+}
+
+/* 完成中断函数注册和异常名称注册 */
+static void esception_init()
+{
+    int i;
+    for (i = 0; i < IDT_DESC_CNT; i++)
+    {
+        idt_table[i] = general_init_hadnler;   // 默认用general_init_handler，以后再修改
+        intr_name = "unknow";
+    }
+    intr_name[0] = "#DE Divide Error";
+    intr_name[1] = "#DB Debug Exception";
+    intr_name[2] = "NMI Interrupt";
+    intr_name[3] = "#BP Breakpoint Exception";
+    intr_name[4] = "#OF Overflow Exception";
+    intr_name[5] = "#BR BOUND Range Exceeded Exception";
+    intr_name[6] = "#UD Invalid Opcode Exception";
+    intr_name[7] = "#NM Device Not Available Exception";
+    intr_name[8] = "#DF Double Fault Exception";
+    intr_name[9] = "Coprocessor Segment Overrun";
+    intr_name[10] = "#TS Invalid TSS Exception";
+    intr_name[11] = "#NP Segment Not Present";
+    intr_name[12] = "#SS Stack Fault Exception";
+    intr_name[13] = "#GP General Protection Exception";
+    intr_name[14] = "#PF Page-Fault Exception";
+    // intr_name[15] 第15项是intel保留项，未使用
+    intr_name[16] = "#MF x87 FPU Floating-Point Error";
+    intr_name[17] = "#AC Alignment Check Exception";
+    intr_name[18] = "#MC Machine-Check Exception";
+    intr_name[19] = "#XF SIMD Floating-Point Exception";
 }
 
 void idt_init()

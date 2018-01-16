@@ -1,32 +1,56 @@
 [bits 32]
-%define ERROR_CODE
+%define ERROR_CODE nop
 %define ZERO push 0
 
-extern put_str  ; 声明外部函数
+extern idt_table     ;idt_table是interrupt.c中注册的中断处理程序指针数组
+
+
 
 section .data
-    intr_str db "interrupt occur!", 0xa, 0
-    global intr_entry_table
+global intr_entry_table
+intr_entry_table:
 
-    intr_entry_table:
-        %macro VECTOR 2
-            section .text
-                intr%1entry:
-                %2
-                push intr_str   ; 压入参数
-                call put_str    ; 调用打印函数
-                add esp, 4
+%macro VECTOR 2 ; %1 是中断向量号, %2是 ERROR_CODE 或者 ZERO
+section .text
+intr%1entry:
+    %2
+    ; 保存上下文环境
+    push ds
+    push es
+    push fs
+    push gs
+    pushad  ; PUSHAD指令压入32位寄存器,其入栈顺序是: EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI
             
-                mov al, 0x20    ; 中断结束命令EOI
-                out 0xa0, al    ; 向从片发送
-                out 0x20, al    ; 向主片发送
+    ; 如果是从片上进入的中断,除了往从片上发送EOI外,还要往主片上发送EOI
+    mov al, 0x20    ; 中断结束命令EOI
+    out 0xa0, al    ; 向从片发送
+    out 0x20, al    ; 向主片发送
 
-                add esp, 4      ; 跨过错误码
-                iret            ; 从中断返回
+    push %1			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
+    call [idt_table + %1*4]       ; 调用idt_table中的C版本中断处理函数
+    jmp intr_exit
 
-            section .data
-                dd intr%1entry  ; 存储各个中断程序入口
-        %endmacro
+section .data
+    dd intr%1entry  ; 存储各个中断程序入口
+%endmacro
+
+
+
+
+section .text
+global intr_exit
+intr_exit:
+    ; 恢复上下文环境
+    add esp, 4  ; 跳过中断号
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    add esp, 4  ; 跳过error_code
+    iretd
+
+
 
 VECTOR 0x00, ZERO
 VECTOR 0x01, ZERO
