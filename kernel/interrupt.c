@@ -71,7 +71,7 @@ static void idt_desc_init()
 }
 
 /* 默认中断处理函数 */
-static vopid general_init_hadnler(uint8_t vec_nr)
+static void general_init_hadnler(uint8_t vec_nr)
 {
     if (vec_nr == 0x27 || vec_nr == 0x2f)
     {
