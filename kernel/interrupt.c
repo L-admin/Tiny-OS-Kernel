@@ -70,7 +70,7 @@ static void idt_desc_init()
     put_str("   idt_desc_init done\n");
 }
 
-/* 通用中断处理函数 */
+/* 默认中断处理函数 */
 static vopid general_init_hadnler(uint8_t vec_nr)
 {
     if (vec_nr == 0x27 || vec_nr = 0x2f)
@@ -89,7 +89,7 @@ static void esception_init()
     int i;
     for (i = 0; i < IDT_DESC_CNT; i++)
     {
-        idt_table[i] = general_init_hadnler;   // 默认用general_init_handler，以后再修改
+        idt_table[i] = general_init_hadnler;   // 默认用general_init_handler，以后具体中断再修改
         intr_name = "unknow";
     }
     intr_name[0] = "#DE Divide Error";
