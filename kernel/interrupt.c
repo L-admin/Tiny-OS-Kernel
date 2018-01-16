@@ -136,7 +136,7 @@ enum intr_status intr_enable()
 {
     enum intr_enable old_status;
 
-    old_staus = intr_get_status();
+    old_status = intr_get_status();
 
     if (old_status == INTR_OFF)
        asm volatile("sti");     // 打开中断
@@ -149,7 +149,7 @@ enum intr_status intr_disable()
 {
     enum intr_enable old_status;
 
-    old_staus = intr_get_status();
+    old_status = intr_get_status();
 
     if (old_status == INTR_ON)
         asm volatile("cli" : : : "memory"); // 关中断
