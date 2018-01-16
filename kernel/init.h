@@ -3,6 +3,7 @@
 
 #include "../lib/kernel/print.h"
 #include "interrupt.h"
+#include "../device/timer.h"
 
 void init_all();
 
