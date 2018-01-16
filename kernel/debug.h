@@ -10,10 +10,12 @@ void panic_spin(char *filename, int line, const char* func,
 #ifndef NDEBUG
     #define ASSERT(CONDITION) ((void)0)\
 #else
-#define ASSERT(CONDITION) \
-if (CONDITION){ } else { \
-    PANIC(CONDITION); \
-}
+    #define ASSERT(CONDITION) \
+        if (CONDITION){ }     \
+        else                  \
+        { \
+            PANIC(CONDITION); \
+        }
 #endif
 
 
