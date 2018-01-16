@@ -48,7 +48,7 @@ static void pic_init()
    outb (PIC_M_DATA, 0xfe);
    outb (PIC_S_DATA, 0xff);
 
-   put_str("    pic_init done\n");
+   put_str("   pic_init done\n");
 }
 
 /* 创建中断门描述符 */
@@ -84,7 +84,7 @@ static void general_init_hadnler(uint8_t vec_nr)
 }
 
 /* 完成中断函数注册和异常名称注册 */
-static void esception_init()
+static void exception_init()
 {
     int i;
     for (i = 0; i < IDT_DESC_CNT; i++)
@@ -116,14 +116,17 @@ static void esception_init()
 
 void idt_init()
 {
-    put_str("   idt_init start\n");
-    idt_desc_init();    // 初始化中断描述符表
-    pic_init();         // 初始化8259A
+    put_str(" idt_init start\n");
 
+    idt_desc_init();    // 初始化中断描述符表
+    exception_init();   // 异常名初始化并注册默认的中断处理函数
+    pic_init();         // 初始化8259A
     /* 加载IDT */
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
+    /* 打开中断 */
     asm volatile("lidt %0" : : "m" (idt_operand));
-    put_str("idt_init done\n");
+
+    put_str(" idt_init done\n");
 }
 
 /*
