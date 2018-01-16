@@ -73,14 +73,14 @@ static void idt_desc_init()
 /* 默认中断处理函数 */
 static vopid general_init_hadnler(uint8_t vec_nr)
 {
-    if (vec_nr == 0x27 || vec_nr = 0x2f)
+    if (vec_nr == 0x27 || vec_nr == 0x2f)
     {
         return;
     }
 
     put_str("init vector: 0x");
     put_int(vec_nr);
-    put_char("\n");
+    put_char('\n');
 }
 
 /* 完成中断函数注册和异常名称注册 */
@@ -90,7 +90,7 @@ static void esception_init()
     for (i = 0; i < IDT_DESC_CNT; i++)
     {
         idt_table[i] = general_init_hadnler;   // 默认用general_init_handler，以后具体中断再修改
-        intr_name = "unknow";
+        intr_name[i] = "unknow";
     }
     intr_name[0] = "#DE Divide Error";
     intr_name[1] = "#DB Debug Exception";
