@@ -134,7 +134,7 @@ enum intr_status intr_set_status(enum intr_status status)
 /* 打开中断并返回打开中断前的"中断是否打开状态" */
 enum intr_status intr_enable()
 {
-    enum intr_enable old_status;
+    enum intr_status old_status;
 
     old_status = intr_get_status();
 
@@ -147,7 +147,7 @@ enum intr_status intr_enable()
 /* 关闭中断并返回关闭中断前的"中断是否打开状态" */
 enum intr_status intr_disable()
 {
-    enum intr_enable old_status;
+    enum intr_status old_status;
 
     old_status = intr_get_status();
 
