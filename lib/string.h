@@ -2,6 +2,8 @@
 #define __LIB_STRING_H
 
 #include "stdint.h"
+#include "../kernel/global.h"
+#include "../kernel/debug.h"
 
 void memset(void* dst_, uint8_t value, uint32_t size);
 void memcpy(void* dst_, const void* src_, uint32_t size);
