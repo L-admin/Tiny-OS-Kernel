@@ -90,18 +90,16 @@ loader_start:
 .mem_get_ok:
     mov [total_mem_bytes], edx	 ;将内存换为byte单位后存入total_mem_bytes处。
 
-.error_hlt:		      ; 出错则挂起
-   hlt
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;; 准备进入保护模式 ;;;;;;;;;;;;;;;;;
     ; 打开A20
-    in al, 0x92             ; 0x928
-    or al, 00000010b        ; 0x92a
-    out 0x92, al            ; 0x92c
+	in al, 0x92
+	or al, 00000010b
+	out 0x92, al
 
     ; 加载gdt
-    lgdt [gdt_ptr]          ; 0x92e
+	lgdt [gdt_ptr]
 
     ; CR0第0位置1
     mov eax, cr0
@@ -109,7 +107,10 @@ loader_start:
     mov cr0, eax
 
     ; 刷新流水线
-    jmp dword SELECTOR_CODE: p_mode_start
+	jmp dword SELECTOR_CODE: p_mode_start
+.error_hlt:		      ; 出错则挂起
+       hlt
+
 ;----------------------------------------------------------
 [bits 32]
 p_mode_start:
