@@ -4,11 +4,6 @@
 %include "boot.inc"
 section loader vstart=LOADER_BASE_ADDR      ;0x900
     
-;    LOADER_STACK_TOP equ LOADER_BASE_ADDR   
-
-    jmp loader_start                ; 0x900
-
-
     ;;;;;;;;;;;;;;;;;;;; gdt描述符属性 ;;;;;;;;;;;;;;;;;;;;;;;;
     ;; 31-24 23  22  21  20  19-16 15 14-13  12  11-8  7-0
     ;; 段基址  G  D/B  L  AVL 段界限  P   DPL   S  TYPE  段基址     ; 高32位
@@ -16,17 +11,17 @@ section loader vstart=LOADER_BASE_ADDR      ;0x900
     ;; 31-16   15-0
     ;; 段基址   段界限                                             ; 低32位
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    GDT_BASE: dd 0x00000000         ; 0x903
-              dd 0x00000000         ; 0x907
+	GDT_BASE: dd 0x00000000         ; 0x900
+	          dd 0x00000000         ; 0x904
 
-    CODE_DESC: dd 0x0000FFFF        ; 0x90b  值: 0x0000FFFF(低32位)
-               dd DESC_CODE_HIGH4   ; 0x90f  值: 0x00CF9800(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
+    CODE_DESC: dd 0x0000FFFF        ; 0x908  值: 0x0000FFFF(低32位)
+	           dd DESC_CODE_HIGH4   ; 0x90c  值: 0x00CF9800(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
 
-    DATA_STACK_DESC: dd 0x0000FFFF  ; 0x913     值: 0x0000FFFF(低32位)
-                     dd DESC_DATA_HIGH4 ;0x917  值: 0x00CF9200(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
+    DATA_STACK_DESC: dd 0x0000FFFF  ; 0x910     值: 0x0000FFFF(低32位)
+	                 dd DESC_DATA_HIGH4 ;0x914  值: 0x00CF9200(高32位)? 段基址: 0x00000000 段界限值: 0xFFFFF
 
-    VIDEO_DESC: dd 0x80000007       ; 0x91b  值: 0x80000007(低32位)
-                dd DESC_VIDEO_HIGH4 ; 0x91f  值: 0x00C0920B(高32位)? 段基址: 0x000B8000 段界限值: 0x00007
+    VIDEO_DESC: dd 0x80000007       ; 0x918  值: 0x80000007(低32位)
+	            dd DESC_VIDEO_HIGH4 ; 0x91c  值: 0x00C0920B(高32位)? 段基址: 0x000B8000 段界限值: 0x00007
    
     GDT_SIZE equ $ - GDT_BASE
     GDT_LIMIT equ GDT_SIZE - 1
@@ -38,11 +33,67 @@ section loader vstart=LOADER_BASE_ADDR      ;0x900
     SELECTOR_DATA equ (0x0002 << 3) + TI_GDT + RPL0     ; 0000_0000 0001_0000, 第2个段描述符
     SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0    ; 0000_0000 0001_1000, 第3个段描述符
 
+    total_mem_bytes dd 0	; 0xb00, total_mem_bytes用于记录内存大小
+
     gdt_ptr dw GDT_LIMIT            ; 0xb03   2字节 GDT_LIMIT=31
             dd GDT_BASE             ; 0xb05   4字节
 
+    ; 人工对齐: total_mem_bytes4字节 + gdt_ptr6字节 + ards_buf244字节 + ards_nr2字节,共256字节
+	ards_buf times 244 db 0
+	ards_nr dw 0		      ; 用于记录ards结构体数量
+
 
 loader_start:
+;;;;;;;;;;;;;;;;;;;;;;;; 用于获取内存    ;;;;;;;;;;;;;;;;;
+;------  int 15h ax = E801h 获取内存大小,最大支持4G  ------
+; 返回后, ax cx 值一样,以KB为单位,bx dx值一样,以64KB为单位
+; 在ax和cx寄存器中为低16M,在bx和dx寄存器中为16MB到4G。
+
+.e820_failed_so_try_e801:
+    mov ax,0xe801
+	int 0x15
+	jc .e801_failed_so_try88   ;若当前e801方法失败,就尝试0x88方法
+
+    ;1 先算出低15M的内存,ax和cx中是以KB为单位的内存数量,将其转换为以byte为单位
+	mov cx,0x400	     ;cx和ax值一样,cx用做乘数
+	mul cx
+	shl edx,16
+	and eax,0x0000FFFF
+	or edx,eax
+	add edx, 0x100000 ;ax只是15MB,故要加1MB
+	mov esi,edx	     ;先把低15MB的内存容量存入esi寄存器备份
+
+    ;2 再将16MB以上的内存转换为byte为单位,寄存器bx和dx中是以64KB为单位的内存数量
+	xor eax,eax
+	mov ax,bx
+	mov ecx, 0x10000	;0x10000十进制为64KB
+	mul ecx		;32位乘法,默认的被乘数是eax,积为64位,高32位存入edx,低32位存入eax.
+	add esi,eax		;由于此方法只能测出4G以内的内存,故32位eax足够了,edx肯定为0,只加eax便可
+	mov edx,esi		;edx为总内存大小
+	jmp .mem_get_ok
+
+;-----------------  int 15h ah = 0x88 获取内存大小,只能获取64M之内  ----------
+.e801_failed_so_try88:
+    ;int 15后，ax存入的是以kb为单位的内存容量
+	mov  ah, 0x88
+	int  0x15
+	jc .error_hlt
+	and eax,0x0000FFFF
+
+    ;16位乘法，被乘数是ax,积为32位.积的高16位在dx中，积的低16位在ax中
+	mov cx, 0x400     ;0x400等于1024,将ax中的内存容量换为以byte为单位
+	mul cx
+	shl edx, 16	     ;把dx移到高16位
+	or edx, eax	     ;把积的低16位组合到edx,为32位的积
+	add edx,0x100000  ;0x88子功能只会返回1MB以上的内存,故实际内存大小要加上1MB
+
+.mem_get_ok:
+    mov [total_mem_bytes], edx	 ;将内存换为byte单位后存入total_mem_bytes处。
+
+.error_hlt:		      ; 出错则挂起
+   hlt
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;; 准备进入保护模式 ;;;;;;;;;;;;;;;;;
     ; 打开A20
     in al, 0x92             ; 0x928
