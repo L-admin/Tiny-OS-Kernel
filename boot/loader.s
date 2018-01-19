@@ -3,7 +3,6 @@
 
 %include "boot.inc"
 section loader vstart=LOADER_BASE_ADDR      ;0x900
-    jmp loader_start
     ;;;;;;;;;;;;;;;;;;;; gdt描述符属性 ;;;;;;;;;;;;;;;;;;;;;;;;
     ;; 31-24 23  22  21  20  19-16 15 14-13  12  11-8  7-0
     ;; 段基址  G  D/B  L  AVL 段界限  P   DPL   S  TYPE  段基址     ; 高32位
@@ -110,7 +109,7 @@ loader_start:
 ;----------------------------------------------------------
 
 .error_hlt:
-       hlt			使cpu暂停执行(保护模式下的指令)
+       hlt			;使cpu暂停执行(保护模式下的指令)
 [bits 32]
 p_mode_start:
     ; 初始化段寄存器

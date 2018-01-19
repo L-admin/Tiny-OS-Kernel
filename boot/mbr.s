@@ -2,7 +2,7 @@
 ;---------------------------
 
 %include "boot.inc"
-SECTION MBR vstart=0x7c00
+SECTION MBR vstart=0x7c00	; 实模式下BIOS将MBR加载到0x7c00
     mov ax, cs
     mov ds, ax
     mov es, ax
@@ -52,7 +52,7 @@ mov cx, 4                       ; 参数: 待读入的扇区数
 call rd_disk_m_16
 
 
-jmp LOADER_BASE_ADDR            ; 跳到内核加载器
+jmp LOADER_BASE_ADDR + 0x300            ; 跳到内核加载器代码部分
 
 ;----------------------
 ;功能: 读取硬盘n个扇区
