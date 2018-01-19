@@ -4,6 +4,7 @@
 #include "../lib/kernel/print.h"
 #include "interrupt.h"
 #include "../device/timer.h"
+#include "memory.h"
 
 void init_all();
 
