@@ -14,7 +14,7 @@
 struct bitmap
 {
     uint32_t btmp_bytes_len;   // 位图中字节长度(注意不是位的长度，是字节长度)
-    uint8_t* bits;
+    uint8_t* bits;      // 位图存放的起始地址(字节)
 };
 
 void bitmap_init(struct bitmap* btmp);
