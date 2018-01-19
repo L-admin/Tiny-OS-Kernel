@@ -161,7 +161,7 @@ enum intr_status intr_disable()
 
 void idt_init()
 {
-    put_str(" idt_init start\n");
+    put_str("idt_init start\n");
 
     idt_desc_init();    // 初始化中断描述符表
     exception_init();   // 异常名初始化并注册默认的中断处理函数
@@ -171,7 +171,7 @@ void idt_init()
     /* 打开中断 */
     asm volatile("lidt %0" : : "m" (idt_operand));
 
-    put_str(" idt_init done\n");
+    put_str("idt_init done\n");
 }
 
 /*
