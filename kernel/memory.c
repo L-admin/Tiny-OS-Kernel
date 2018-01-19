@@ -5,7 +5,7 @@ static void mem_pool_init(uint32_t all_mem)
     put_str("   mem_pool_init start\n");
 
     uint32_t page_table_size = PG_SIZE * 256;   // 1个页目录表 + 0和768页目录项指向同一个页表，+ 769~1023=254个页表=256
-    uint32_t used_mem = 0x100000 + page_table_size + ; // 0x100000, 1MB低端内存, 用于OS
+    uint32_t used_mem = 0x100000 + page_table_size; // 0x100000, 1MB低端内存, 用于OS
 
     uint32_t free_mem = all_mem - used_mem;     // 32MB-2MB = 30MB
 
