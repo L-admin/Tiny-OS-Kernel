@@ -4,10 +4,9 @@
 
 int main(void)
 {
-    put_str("I am kernel\n");
-    init_all();
-    //asm volatile("sti");	     // 打开中断 sti 指令，已将除时钟之外的所有设备中断都屏蔽了
-    ASSERT(1 == 2);
+    put_str("mem_init start\n");
+    uint32_t mem_bytes_total = (*(uint32_t)(0xb00));
+    mem_pool_init(mem_bytes_total);
     while(1)
         ;
 }
