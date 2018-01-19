@@ -105,7 +105,7 @@ char* strcat(char* dst_, const char* src_)
     ASSERT(dst_ != NULL && src_ != NULL);
 
     char* p1 = dst_;
-    char* p2 = src_;
+    const char* p2 = src_;
 
     while(*p1++)
         ;
@@ -119,7 +119,7 @@ char* strcat(char* dst_, const char* src_)
 }
 
 /* 在字符串str中查找指定字符ch出现的次数 */
-uint32_t strchrs(const char *filename, uint8_t ch)
+uint32_t strchrs(const char *str, uint8_t ch)
 {
     ASSERT(str != NULL);
 

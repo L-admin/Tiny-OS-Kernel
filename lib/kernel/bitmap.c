@@ -1,22 +1,22 @@
 #include "bitmap.h"
 
 /* 将位图btmp初始化 */
-void bitmap_init(bitmap *btmp)
+void bitmap_init(struct bitmap *btmp)
 {
     memset(btmp->bits, 0, btmp->btmp_bytes_len);
 }
 
 /* 判断bit_idx位是否为1,若为1则返回true，否则返回false */
-bool bitmap_scan_test(bitmap *btmp, uint32_t bit_idx)
+bool bitmap_scan_test(struct bitmap *btmp, uint32_t bit_idx)
 {
     uint32_t byte_index = bit_idx/8;
     uint32_t bit_odd = bit_idx % 8;
 
-    return (bitmap->bits[byte_index] & (BITMAP_MASK << bit_odd));
+    return (btmp->bits[byte_index] & (BITMAP_MASK << bit_odd));
 }
 
 /* 在位图中申请连续 cnt个位,成功则返回其起始位下标，失败返回-1 */
-int bitmap_scan(bitmap *btmp, uint32_t cnt)
+int bitmap_scan(struct bitmap *btmp, uint32_t cnt)
 {
     uint32_t idx_byte = 0;
 
@@ -30,7 +30,7 @@ int bitmap_scan(bitmap *btmp, uint32_t cnt)
         return -1;
 
     int idx_bit = 0;
-    while((uint_8)(BITMAP_MASK << idx_bit) & btmp->bits[idx_byte])
+    while((uint8_t)(BITMAP_MASK << idx_bit) & btmp->bits[idx_byte])
         idx_bit++;
 
     int bit_idx_start = idx_byte * 8 + idx_bit;
@@ -61,7 +61,7 @@ int bitmap_scan(bitmap *btmp, uint32_t cnt)
 }
 
 /* 将位图btmp的bit_idx位设置为value */
-void bitmap_set(bitmap *btmp, uint32_t bit_idx, int8_t value)
+void bitmap_set(struct bitmap *btmp, uint32_t bit_idx, int8_t value)
 {
     ASSERT((value == 0) || (value == 1));
 
