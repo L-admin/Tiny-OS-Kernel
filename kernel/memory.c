@@ -68,19 +68,23 @@ static void mem_pool_init(uint32_t all_mem)
  */
 static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
 {
-    int vaddr_start = 0, bit_idx_start = -1;
+    int vaddr_start = 0;
+    int bit_idx_start = -1;
     uint32_t cnt = 0;
 
     if (pf == PF_KERNEL)
     {
-        bit_idx_start = bitmap_scan(&(kernel_vaddr.vaddr_bitmap), pg_cnt);
-        if (bit_idx_start == -1)
+        bit_idx_start = bitmap_scan(&(kernel_vaddr.vaddr_bitmap), pg_cnt);  // bit_idx_start 虚拟页起始位
+
+        if (bit_idx_start == -1)    // 没有足够的虚拟页
             return NULL;
+
         while(cnt < pg_cnt)
         {
-            bitmap_set(&(kernel_vaddr.vaddr_bitmap), bit_idx_start + cnt, pg_cnt);
+            bitmap_set(&(kernel_vaddr.vaddr_bitmap), bit_idx_start + cnt, 1);
             cnt++;
         }
+
         vaddr_start = kernel_vaddr.vaddr_start + bit_idx_start * PG_SIZE;
     }
     else if (pf == PF_USER)
@@ -91,7 +95,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
     return (void*)vaddr_start;
 }
 
-/* 得到虚拟地址vaddr对应的pte()指针 */
+/* 得到虚拟地址vaddr对应的页表项pte()地址 */
 uint32_t* pte_ptr(uint32_t vaddr)
 {
     // 虚地址 0xffc00000 映射物理地址 0x00100000(页目录表地址)
@@ -115,11 +119,13 @@ uint32_t* pde_ptr(uint32_t vaddr)
 static void* palloc(struct pool* m_pool)
 {
     /* 扫描或设置位图要保证原子操作 */
-    int bit_idx = bitmap_scan(&m_pool->pool_bitmap, 1);
+    int bit_idx = bitmap_scan(&(m_pool->pool_bitmap), 1);
+
     if (bit_idx == -1)
         return NULL;
-    bitmap_set(&m_pool->pool_bitmap, bit_idx, 1);
-    uint32_t page_phyaddr = ((bit_idx * PG_SIZE) + m_pool->phy_addr_start);
+
+    bitmap_set(&(m_pool->pool_bitmap), bit_idx, 1);
+    uint32_t page_phyaddr = ( m_pool->phy_addr_start + (bit_idx * PG_SIZE));
 
     return (void*)page_phyaddr;
 }
@@ -137,19 +143,14 @@ static void page_table_add(void* _vaddr, void* _page_phyaddr)
 
     if (*pde & 0x00000001)  // 页目录项存在
     {
-        ASSERT(!(*pde & 0x00000001));
+        ASSERT(!(*pte & 0x00000001));   // 页表项存在报错
 
         if (!(*pte & 0x00000001))   // 页表项不存在
             *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
-        else
-        {
-            PANIC("pte repeat");
-            *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
-        }
     }
     else    // 页目录项不存在，先创建页目录项，再创建页表项,申请页框的内存
     {
-        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);  // 到页框的映射
+        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);  // 页表用到的页框一律从内核空间分配
         *pde = (pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
         memset((void*)((int)pte & 0xfffff000), 0, PG_SIZE);
         ASSERT(!(*pte & 0x00000001));
