@@ -99,8 +99,8 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
 uint32_t* pte_ptr(uint32_t vaddr)
 {
     // 虚地址 0xffc00000 映射物理地址 0x00100000(页目录表地址)
-    uint32_t* pte = (uint32_t*)(0xffc00000) +
-            ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr)*4;
+    uint32_t* pte = (uint32_t*)(0xffc00000 +
+            ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr)*4);
     return pte;
 }
 
@@ -174,7 +174,7 @@ void* malloc_page(enum pool_flags pf, uint32_t pg_cnt)
         return NULL;
 
     uint32_t vaddr = (uint32_t)vaddr_start, cnt = pg_cnt;
-    struct pool* mem_pool = pf & PF_KERNEL ? &kernel_pool : &user_pool;
+    struct pool* mem_pool = ((pf == PF_KERNEL) ? &kernel_pool : &user_pool);
 
     while(cnt-- > 0)
     {
