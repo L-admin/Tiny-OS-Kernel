@@ -42,7 +42,7 @@ void init_thread(struct task_struct* pthread, char*name, int prio)
 struct task_struct* thread_start(char* name, int prio,
                                  thread_func function, void* func_arg)
 {
-    struct task_struct* thread = get_kernel_page(1);
+    struct task_struct* thread = get_kernel_pages(1);
 
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);

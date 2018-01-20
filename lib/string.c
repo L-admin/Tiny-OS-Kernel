@@ -52,6 +52,17 @@ uint32_t strlen(const char *str)
     return p-str-1;
 }
 
+/* 将字符串从src_复制到dst_ */
+char* strcpy(char* dst_, const char* src_)
+{
+   ASSERT(dst_ != NULL && src_ != NULL);
+
+   char* r = dst_;		       // 用来返回目的字符串起始地址
+   while((*dst_++ = *src_++));
+   return r;
+}
+
+
 /* 比较两个字符串,若a_中的字符大于b_中的字符返回1,相等时返回0,否则返回-1. */
 int8_t strcmp (const char* a, const char* b)
 {
