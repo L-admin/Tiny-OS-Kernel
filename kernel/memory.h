@@ -4,7 +4,7 @@
 #include "../lib/stdint.h"
 #include "../lib/kernel/bitmap.h"
 #include "../lib/kernel/print.h"
-
+#include "global.h"
 
 
 #define PG_SIZE 4096
@@ -34,7 +34,34 @@ struct pool kernel_pool;
 struct pool user_pool;
 
 
+
+/* 内存池标记，用于判断用哪个内存池 */
+enum pool_flags
+{
+    PF_KERNEL = 1,  // 内核内存池
+    PF_USER = 2     // 用户内存池
+};
+
+#define PG_P_1  1   // 页表项或页目录项存在属性位
+#define PG_P_0  0   // 页表项或页目录项存在属性位
+
+#define PG_RW_R 0   // R/W 属性位值，读/执行
+#define PG_RW_W 2   // R/W 属性位值，读/写/执行
+
+#define PG_US_S 0   // U/S 属性位值，系统级
+#define PG_US_U 4   // U/S 属性位值，用户级
+
+
+#define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)   // 取出页目录项
+#define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)   // 取出页表项
+
+
 void mem_init();
+void* get_kernel_page(uint32_t pg_cnt);
+void* malloc_page(enum pool_flags pf, uint32_t pg_cnt);
+void malloc_init();
+uint32_t* pte_ptr(uint32_t vaddr);
+uint32_t* pde_ptr(uint32_t vaddr);
 
 
 #endif // MEMORY_H

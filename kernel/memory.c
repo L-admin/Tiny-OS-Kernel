@@ -1,5 +1,7 @@
 #include "memory.h"
 
+
+
 static void mem_pool_init(uint32_t all_mem)
 {
     put_str("   mem_pool_init start\n");
@@ -57,6 +59,144 @@ static void mem_pool_init(uint32_t all_mem)
     kernel_vaddr.vaddr_start = K_HEAP_START;    // 0xc0100000
 
     put_str("   mem_pool_init done\n");
+}
+
+
+/*
+ * 在pf表示的内存池中申请pg_cnt个虚拟页
+ * 成功则返回虚拟页的起始地址，失败则返回NULL
+ */
+static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
+{
+    int vaddr_start = 0, bit_idx_start = -1;
+    uint32_t cnt = 0;
+
+    if (pf == PF_KERNEL)
+    {
+        bit_idx_start = bitmap_scan(&(kernel_vaddr.vaddr_bitmap), pg_cnt);
+        if (bit_idx_start == -1)
+            return NULL;
+        while(cnt < pg_cnt)
+        {
+            bitmap_set(&(kernel_vaddr.vaddr_bitmap), bit_idx_start + cnt, pg_cnt);
+            cnt++;
+        }
+        vaddr_start = kernel_vaddr.vaddr_start + bit_idx_start * PG_SIZE;
+    }
+    else if (pf == PF_USER)
+    {
+        // 用户内存池，待实现
+    }
+
+    return (void*)vaddr_start;
+}
+
+/* 得到虚拟地址vaddr对应的pte()指针 */
+uint32_t* pte_ptr(uint32_t vaddr)
+{
+    // 虚地址 0xffc00000 映射物理地址 0x00100000(页目录表地址)
+    uint32_t* pte = (uint32_t*)(0xffc00000) +
+            ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr)*4;
+    return pte;
+}
+
+/* 得到虚拟地址vaddr对应的pde(页目录项)指针 */
+uint32_t* pde_ptr(uint32_t vaddr)
+{
+    // 虚地址 0xfffff000 映射物理地址:0x00100000(页目录表起始地址)
+    uint32_t* pde = (uint32_t*)((0xfffff000) + PDE_IDX(vaddr) * 4);
+    return pde;
+}
+
+/*
+ * 在m_pool指向的物理内存池中分配1个物理页
+ * 成功则返回页框的物理地址，失败则返回NULL
+ */
+static void* palloc(struct pool* m_pool)
+{
+    /* 扫描或设置位图要保证原子操作 */
+    int bit_idx = bitmap_scan(&m_pool->pool_bitmap, 1);
+    if (bit_idx == -1)
+        return NULL;
+    bitmap_set(&m_pool->pool_bitmap, bit_idx, 1);
+    uint32_t page_phyaddr = ((bit_idx * PG_SIZE) + m_pool->phy_addr_start);
+
+    return (void*)page_phyaddr;
+}
+
+/*
+ * 页表中添加虚拟地址_vaddr到物理地址_page_phyaddr的映射
+ */
+static void page_table_add(void* _vaddr, void* _page_phyaddr)
+{
+    uint32_t vaddr = (uint32_t)_vaddr;
+    uint32_t page_phyaddr = (uint32_t)_page_phyaddr;
+
+    uint32_t* pde = pde_ptr(vaddr);
+    uint32_t* pte = pte_ptr(vaddr);
+
+    if (*pde & 0x00000001)  // 页目录项存在
+    {
+        ASSERT(!(*pde & 0x00000001));
+
+        if (!(*pte & 0x00000001))   // 页表项不存在
+            *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
+        else
+        {
+            PANIC("pte repeat");
+            *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
+        }
+    }
+    else    // 页目录项不存在，先创建页目录项，再创建页表项,申请页框的内存
+    {
+        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);  // 到页框的映射
+        *pde = (pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
+        memset((void*)((int)pte & 0xfffff000), 0, PG_SIZE);
+        ASSERT(!(*pte & 0x00000001));
+        *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
+    }
+}
+
+/*
+ * malloc_page 分配pg_cnt个页空间,成功则返回起始虚拟地址,失败时返回NULL
+ * 1 通过vaddr_get在虚拟内存池中申请虚拟地址
+ * 2 通过palloc在物理内存池中申请物理页
+ * 3 通过page_table_add将以上得到的虚拟地址和物理地址在页表中完成映射
+ */
+void* malloc_page(enum pool_flags pf, uint32_t pg_cnt)
+{
+    ASSERT(pg_cnt > 0 && pg_cnt < 3840);
+
+
+    void* vaddr_start = vaddr_get(pf, pg_cnt);
+    if (vaddr_start == NULL)
+        return NULL;
+
+    uint32_t vaddr = (uint32_t)vaddr_start, cnt = pg_cnt;
+    struct pool* mem_pool = pf & PF_KERNEL ? &kernel_pool : &user_pool;
+
+    while(cnt-- > 0)
+    {
+        void* page_phyaddr = palloc(mem_pool);
+        if (page_phyaddr == NULL)
+            return NULL;
+        page_table_add((void*)vaddr, page_phyaddr);
+        vaddr += PG_SIZE;
+    }
+    return vaddr_start;
+}
+
+/*
+ * 从内核内存池中申请 pg_cnt 页内存
+ */
+void* get_kernel_pages(uint32_t pg_cnt)
+{
+    void* vaddr =  malloc_page(PF_KERNEL, pg_cnt);
+
+    if (vaddr != NULL)	   // 若分配的地址不为空,将页框清0后返回
+        memset(vaddr, 0, pg_cnt * PG_SIZE);
+
+    return vaddr;
 }
 
 /* 内存管理部分初始化入口 */
