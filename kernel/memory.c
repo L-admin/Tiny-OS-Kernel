@@ -81,7 +81,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
 
         while(cnt < pg_cnt)
         {
-            bitmap_set(&(kernel_vaddr.vaddr_bitmap), bit_idx_start + cnt, 1);
+            bitmap_set(&(kernel_vaddr.vaddr_bitmap), bit_idx_start + cnt, 1);   // 更新位图
             cnt++;
         }
 
@@ -95,22 +95,6 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
     return (void*)vaddr_start;
 }
 
-/* 得到虚拟地址vaddr对应的页表项pte()地址 */
-uint32_t* pte_ptr(uint32_t vaddr)
-{
-    // 虚地址 0xffc00000 映射物理地址 0x00100000(页目录表地址)
-    uint32_t* pte = (uint32_t*)(0xffc00000 +
-            ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr)*4);
-    return pte;
-}
-
-/* 得到虚拟地址vaddr对应的pde(页目录项)指针 */
-uint32_t* pde_ptr(uint32_t vaddr)
-{
-    // 虚地址 0xfffff000 映射物理地址:0x00100000(页目录表起始地址)
-    uint32_t* pde = (uint32_t*)((0xfffff000) + PDE_IDX(vaddr) * 4);
-    return pde;
-}
 
 /*
  * 在m_pool指向的物理内存池中分配1个物理页
@@ -130,8 +114,25 @@ static void* palloc(struct pool* m_pool)
     return (void*)page_phyaddr;
 }
 
+/* 得到虚拟地址vaddr对应的页表项pte地址 */
+uint32_t* pte_ptr(uint32_t vaddr)
+{
+    // 虚地址 0xffc00000 映射物理地址 0x00100000(页目录表地址)
+    uint32_t* pte = (uint32_t*)(0xffc00000 +
+            ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr)*4);
+    return pte;
+}
+
+/* 得到虚拟地址vaddr对应的页目录项pde地址 */
+uint32_t* pde_ptr(uint32_t vaddr)
+{
+    // 虚地址 0xfffff000 映射物理地址:0x00100000(页目录表起始地址)
+    uint32_t* pde = (uint32_t*)((0xfffff000) + PDE_IDX(vaddr) * 4);
+    return pde;
+}
+
 /*
- * 页表中添加虚拟地址_vaddr到物理地址_page_phyaddr的映射
+ * 页表中添加虚拟地址_vaddr到物理地址_page_phyaddr的映射,设置页目录项和页表项
  */
 static void page_table_add(void* _vaddr, void* _page_phyaddr)
 {
@@ -150,7 +151,7 @@ static void page_table_add(void* _vaddr, void* _page_phyaddr)
     }
     else    // 页目录项不存在，先创建页目录项，再创建页表项,申请页框的内存
     {
-        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);  // 页表用到的页框一律从内核空间分配
+        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);  // 页表用到的页框一律从内核内存池分配
         *pde = (pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
         memset((void*)((int)pte & 0xfffff000), 0, PG_SIZE);
         ASSERT(!(*pte & 0x00000001));
@@ -168,12 +169,13 @@ void* malloc_page(enum pool_flags pf, uint32_t pg_cnt)
 {
     ASSERT(pg_cnt > 0 && pg_cnt < 3840);
 
-
     void* vaddr_start = vaddr_get(pf, pg_cnt);
     if (vaddr_start == NULL)
         return NULL;
 
-    uint32_t vaddr = (uint32_t)vaddr_start, cnt = pg_cnt;
+    uint32_t vaddr = (uint32_t)vaddr_start;
+    uint32_t cnt = pg_cnt;
+
     struct pool* mem_pool = ((pf == PF_KERNEL) ? &kernel_pool : &user_pool);
 
     while(cnt-- > 0)
@@ -181,9 +183,12 @@ void* malloc_page(enum pool_flags pf, uint32_t pg_cnt)
         void* page_phyaddr = palloc(mem_pool);
         if (page_phyaddr == NULL)
             return NULL;
+
         page_table_add((void*)vaddr, page_phyaddr);
+
         vaddr += PG_SIZE;
     }
+
     return vaddr_start;
 }
 
@@ -205,7 +210,7 @@ void mem_init()
 {
     put_str("mem_init start\n");
     uint32_t mem_bytes_total = (*(uint32_t*)(0xb00));
-    mem_pool_init(mem_bytes_total);	  // 初始化内存池     // 虚拟机物理内存总量32MB(0x02000000)
+    mem_pool_init(mem_bytes_total);	  // 初始化内存池, 虚拟机物理内存总量32MB(0x02000000)
     put_str("mem_init done\n");
 }
 

@@ -32,9 +32,9 @@ void init_thread(struct task_struct* pthread, char*name, int prio)
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
     pthread->status = TASK_RUNNING;
-
+    pthread->priority = prio;
     pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);
-    pthread->stack_magic = 0x19870916; // 自定义魔数
+    pthread->stack_magic = 0x19870916;      // 自定义魔数
 }
 
 
@@ -42,12 +42,12 @@ void init_thread(struct task_struct* pthread, char*name, int prio)
 struct task_struct* thread_start(char* name, int prio,
                                  thread_func function, void* func_arg)
 {
-    struct task_struct* thread = get_kernel_pages(1);
+    struct task_struct* thread = get_kernel_pages(1);   // PCB都位于内核空间, 包括用户进程的 PCB 也是内核空间。
 
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
-     asm volatile ("movl %0, %%esp; pop %%ebp; pop %%ebx; pop %%edi; pop %%esi; ret" : : "g" (thread->self_kstack) : "memory");
+    asm volatile ("movl %0, %%esp; pop %%ebp; pop %%ebx; pop %%edi; pop %%esi; ret" : : "g"(thread->self_kstack) : "memory");
 
     return thread;
 }
