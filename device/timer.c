@@ -1,6 +1,5 @@
 #include "timer.h"
-#include "../lib/kernel/io.h"
-#include "../lib/kernel/print.h"
+
 
 #define IRQ0_FREQUENCY	   100
 #define INPUT_FREQUENCY	   1193180
@@ -10,6 +9,14 @@
 #define COUNTER_MODE	   2
 #define READ_WRITE_LATCH   3
 #define PIT_CONTROL_PORT   0x43
+
+
+
+uint32_t ticks; // ticks是内核自中断开启以来总共的嘀嗒数
+static void intr_timer_handler();
+
+
+
 
 /* 把操作的计数器counter_no、读写锁属性rwl、计数器模式counter_mode写入模式控制寄存器并赋予初始值counter_value */
 static void frequency_set(uint8_t counter_port, uint8_t counter_no, uint8_t rwl, uint8_t counter_mode, uint16_t counter_value)
@@ -22,11 +29,44 @@ static void frequency_set(uint8_t counter_port, uint8_t counter_no, uint8_t rwl,
    outb(counter_port, (uint8_t)counter_value >> 8);
 }
 
-/* 初始化PIT8253 */
+
+/*
+ * 时钟的中断处理函数
+ */
+static void intr_timer_handler()
+{
+    struct task_struct* cur_thread = running_thread();  // 取得当前正在运行的线程的PCB
+
+    ASSERT(cur_thread->stack_magic == 0x19870916);
+
+    cur_thread->elpased_ticks++;    // 记录此线程占用CPU的时间(滴答数)
+    ticks++;    // 从内核第一次处理时间中断后开始至今内核态和用户态总共的时间(嘀哒数)
+
+    if (cur_thread->ticks == 0)
+        schedule();
+    else
+        cur_thread->ticks--;
+}
+
+
+/*
+ * 初始化PIT8253
+ */
 void timer_init()
 {
-   put_str("timer_init start\n");
-   /* 设置8253的定时周期,也就是发中断的周期 */
-   frequency_set(CONTRER0_PORT, COUNTER0_NO, READ_WRITE_LATCH, COUNTER_MODE, COUNTER0_VALUE);
-   put_str("timer_init done\n");
+    put_str("timer_init start\n");
+
+    /* 设置8253的定时周期,也就是发中断的周期 */
+    frequency_set(CONTRER0_PORT, COUNTER0_NO, READ_WRITE_LATCH, COUNTER_MODE, COUNTER0_VALUE);
+
+    register_handler(0x20, intr_timer_handler());
+
+    put_str("timer_init done\n");
 }
+
+
+
+
+
+
+

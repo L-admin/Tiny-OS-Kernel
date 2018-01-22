@@ -27,11 +27,13 @@ struct gate_desc
 static struct gate_desc idt[IDT_DESC_CNT];      // idt是中断描述符表,本质上就是个中断门描述符数组
 
 char* intr_name[IDT_DESC_CNT];  // 保存异常的名字，调试
-intr_handler idt_table[IDT_DESC_CNT];   // 定义中断处理程序指针数组
+intr_handler idt_table[IDT_DESC_CNT];   // 定义中断处理函数指针数组
 extern intr_handler intr_entry_table[IDT_DESC_CNT]; // 声明引用定义在kernel.S中的中断处理函数入口数组
 
 
-/* 初始化可编程中断控制器8259A */
+/*
+ * 初始化可编程中断控制器8259A
+ */
 static void pic_init()
 {
 
@@ -54,7 +56,10 @@ static void pic_init()
    put_str("   pic_init done\n");
 }
 
-/* 创建中断门描述符 */
+
+/*
+ * 创建中断门描述符
+ */
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
 {
     p_gdesc->func_offset_low_word = (uint32_t)function & 0x0000FFFF; // 取出低16位
@@ -64,7 +69,10 @@ static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler 
     p_gdesc->func_offset_high_word = (uint32_t)function & 0xFFFF0000;   // 取出高16位
 }
 
-/* 初始化中断描述符表 */
+
+/*
+ * 初始化中断描述符表
+ */
 static void idt_desc_init()
 {
     int i;
@@ -73,20 +81,45 @@ static void idt_desc_init()
     put_str("   idt_desc_init done\n");
 }
 
-/* 默认中断处理函数 */
+
+/*
+ * 默认中断处理函数
+ */
 static void general_init_hadnler(uint8_t vec_nr)
 {
     if (vec_nr == 0x27 || vec_nr == 0x2f)
-    {
         return;
+
+    set_cursor(0);
+    int cursor_pos = 0;
+    while(cursor_pos < 320)
+    {
+        put_char(' ');
+        cursor_pos++;
     }
 
-    put_str("init vector: 0x");
-    put_int(vec_nr);
-    put_char('\n');
+    set_cursor(0);      // 重置光标为屏幕左上角
+    put_str("!!!!!!!      excetion message begin  !!!!!!!!\n");
+    set_cursor(88);     // 从第2行第8个字符开始打印
+    put_str(intr_name[vec_nr]);
+
+    if (vec_nr == 14)   // 若为Pagefault,将缺失的地址打印出来并悬停
+    {
+       int page_fault_vaddr = 0;
+       asm ("movl %%cr2, %0" : "=r" (page_fault_vaddr));	  // cr2是存放造成page_fault的地址
+       put_str("\npage fault addr is ");put_int(page_fault_vaddr);
+    }
+
+    put_str("\n!!!!!!!      excetion message end    !!!!!!!!\n");
+
+    while(1)
+        ;
 }
 
-/* 完成中断函数注册和异常名称注册 */
+
+/*
+ * 完成中断函数注册和异常名称注册
+ */
 static void exception_init()
 {
     int i;
@@ -117,7 +150,10 @@ static void exception_init()
     intr_name[19] = "#XF SIMD Floating-Point Exception";
 }
 
-/* 获取当前中断状态 */
+
+/*
+ * 获取当前中断状态
+ */
 enum intr_status intr_get_status()
 {
     uint32_t eflags = 0;
@@ -125,13 +161,19 @@ enum intr_status intr_get_status()
     return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
 
-/* 设置中断状态为status */
+
+/*
+ * 设置中断状态为status
+ */
 enum intr_status intr_set_status(enum intr_status status)
 {
     return status & INTR_ON ? intr_enable() : intr_disable();
 }
 
-/* 打开中断并返回打开中断前的"中断是否打开状态" */
+
+/*
+ * 打开中断并返回打开中断前的"中断是否打开状态"
+ */
 enum intr_status intr_enable()
 {
     enum intr_status old_status;
@@ -144,7 +186,10 @@ enum intr_status intr_enable()
     return old_status;
 }
 
-/* 关闭中断并返回关闭中断前的"中断是否打开状态" */
+
+/*
+ * 关闭中断并返回关闭中断前的"中断是否打开状态"
+ */
 enum intr_status intr_disable()
 {
     enum intr_status old_status;
@@ -158,6 +203,14 @@ enum intr_status intr_disable()
 }
 
 
+/*
+ * 在中断处理程序数组第vector_no个元素中注册中断处理函数
+ */
+void register_handler(uint8_t vector_no, intr_handler function) // intr_handler 函数指针
+{
+    idt_table[vector_no] = function;
+}
+
 
 void idt_init()
 {
@@ -166,8 +219,10 @@ void idt_init()
     idt_desc_init();    // 初始化中断描述符表
     exception_init();   // 异常名初始化并注册默认的中断处理函数
     pic_init();         // 初始化8259A
+
     /* 加载IDT */
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
+
     /* 打开中断 */
     asm volatile("lidt %0" : : "m" (idt_operand));
 

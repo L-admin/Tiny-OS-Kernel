@@ -10,6 +10,7 @@ void list_init(struct list* list)
     list->tail.next = NULL;
 }
 
+
 /* 判断链表是否为空,空时返回true,否则返回false */
 bool list_empty(struct list* plist)
 {
@@ -57,7 +58,7 @@ void list_push(struct list* plist, struct list_elem* elem)
 /* 追加元素到链表队尾,类似队列的先进先出操作 */
 void list_append(struct list* plist, struct list_elem* elem)
 {
-    list_insert_before(plist->tail, elem);
+    list_insert_before(&(plist->tail), elem);
 }
 
 /* 使元素pelem脱离链表 */
@@ -86,6 +87,21 @@ bool elem_find(struct list* plist, struct list_elem* obj_elem)
 {
     struct list_elem* elem = plist->head.next;
 
+    while(elem != &(plist->tail))
+    {
+        if (elem == obj_elem)
+                return true;
+        elem = elem->next;
+    }
+
+    return false;
+}
+
+
+struct list_elem* list_traversal(struct list* plist, function func, int arg)
+{
+    struct list_elem* elem = plist->head.next;
+
     if (list_empty(plist))
         return NULL;
 
@@ -98,5 +114,4 @@ bool elem_find(struct list* plist, struct list_elem* obj_elem)
 
     return NULL;
 }
-
 
