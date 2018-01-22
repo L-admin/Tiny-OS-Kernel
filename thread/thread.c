@@ -57,7 +57,7 @@ void init_thread(struct task_struct* pthread, char*name, int prio)
     pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);
     pthread->priority = prio;
     pthread->ticks = prio;  // 进程优先级体现在 每次在处理器上执行的时间滴答数
-    pthread->elpased_ticks = 0;
+    pthread->elapsed_ticks = 0;
     pthread->pgdir = NULL;
     pthread->stack_magic = 0x19870916;      // 自定义魔数
 }

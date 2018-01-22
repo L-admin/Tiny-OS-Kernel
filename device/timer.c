@@ -39,7 +39,7 @@ static void intr_timer_handler()
 
     ASSERT(cur_thread->stack_magic == 0x19870916);
 
-    cur_thread->elpased_ticks++;    // 记录此线程占用CPU的时间(滴答数)
+    cur_thread->elapsed_ticks++;    // 记录此线程占用CPU的时间(滴答数)
     ticks++;    // 从内核第一次处理时间中断后开始至今内核态和用户态总共的时间(嘀哒数)
 
     if (cur_thread->ticks == 0)

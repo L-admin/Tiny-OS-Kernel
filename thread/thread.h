@@ -93,7 +93,7 @@ struct task_struct
     uint8_t priority;           // 线程的优先级
 
     uint8_t ticks;              // 每次在处理器上执行的时间滴答数
-    uint32_t elpased_ticks;     // 从开始执行到运行结束所经历的总时间
+    uint32_t elapsed_ticks;     // 从开始执行到运行结束所经历的总时间
 
     struct list_elem general_tag;  // 线程在一般的队列中的结点
 
