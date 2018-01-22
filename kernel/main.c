@@ -14,6 +14,7 @@ int main(void)
     thread_start("k_thread_b", 8, k_thread_b, "argB ");
 
     intr_enable();	// 打开中断,使时钟中断起作用
+
     while(1)
     {
         put_str("Main ");
