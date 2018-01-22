@@ -76,7 +76,7 @@ $(BUILD_DIR)/switch.o: thread/switch.S
 
 ##############  链接所有目标文件  #############
 $(BUILD_DIR)/kernel.bin: $(OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+    $(LD) $(LDFLAGS) $^ -o $@
 
 .PHONY : mk_dir hd clean all
 

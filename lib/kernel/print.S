@@ -19,7 +19,7 @@ put_str:
    push ebx
    push ecx
    xor ecx, ecx		      ; 准备用ecx存储参数,清空
-   mov ebx, [esp + 12]	      ; 从栈中得到待打印的字符串地址 
+   mov ebx, [esp + 12]	      ; 从栈中得到待打印的字符串地址
 .goon:
    mov cl, [ebx]
    cmp cl, 0		      ; 如果处理到了字符串尾,跳到结束处返回
@@ -36,7 +36,7 @@ put_str:
 
 ;------------------------   put_char   -----------------------------
 ;功能描述:把栈中的1个字符写入光标所在处
-;-------------------------------------------------------------------   
+;-------------------------------------------------------------------
 global put_char
 put_char:
    pushad	   ;备份32位寄存器环境
@@ -49,7 +49,7 @@ put_char:
    mov dx, 0x03d4  ;索引寄存器
    mov al, 0x0e	   ;用于提供光标位置的高8位
    out dx, al
-   mov dx, 0x03d5  ;通过读写数据端口0x3d5来获得或设置光标位置 
+   mov dx, 0x03d5  ;通过读写数据端口0x3d5来获得或设置光标位置
    in al, dx	   ;得到了光标位置的高8位
    mov ah, al
 
@@ -57,11 +57,11 @@ put_char:
    mov dx, 0x03d4
    mov al, 0x0f
    out dx, al
-   mov dx, 0x03d5 
+   mov dx, 0x03d5
    in al, dx
 
    ;将光标存入bx
-   mov bx, ax	  
+   mov bx, ax
    ;下面这行是在栈中获取待打印的字符
    mov ecx, [esp + 36]	      ;pushad压入4×8＝32字节,加上主调函数的返回地址4字节,故esp+36字节
    cmp cl, 0xd				  ;CR是0x0d,LF是0x0a
@@ -71,10 +71,10 @@ put_char:
 
    cmp cl, 0x8				  ;BS(backspace)的asc码是8
    jz .is_backspace
-   jmp .put_other	   
+   jmp .put_other
 ;;;;;;;;;;;;;;;;;;
 
- .is_backspace:		      
+ .is_backspace:
 ;;;;;;;;;;;;       backspace的一点说明	     ;;;;;;;;;;
 ; 当为backspace时,本质上只要将光标移向前一个显存位置即可.后面再输入的字符自然会覆盖此处的字符
 ; 但有可能在键入backspace后并不再键入新的字符,这时在光标已经向前移动到待删除的字符位置,但字符还在原处,
@@ -95,49 +95,49 @@ put_char:
    mov byte [gs:bx],0x07		  ; 字符属性
    shr bx, 1				  ; 恢复老的光标值
    inc bx				  ; 下一个光标值
-   cmp bx, 2000		   
+   cmp bx, 2000
    jl .set_cursor			  ; 若光标值小于2000,表示未写到显存的最后,则去设置新的光标值
-					  ; 若超出屏幕字符数大小(2000)则换行处理
+                      ; 若超出屏幕字符数大小(2000)则换行处理
  .is_line_feed:				  ; 是换行符LF(\n)
  .is_carriage_return:			  ; 是回车符CR(\r)
-					  ; 如果是CR(\r),只要把光标移到行首就行了。
+                      ; 如果是CR(\r),只要把光标移到行首就行了。
    xor dx, dx				  ; dx是被除数的高16位,清0.
    mov ax, bx				  ; ax是被除数的低16位.
    mov si, 80				  ; 由于是效仿linux，linux中\n便表示下一行的行首，所以本系统中，
    div si				  ; 把\n和\r都处理为linux中\n的意思，也就是下一行的行首。
    sub bx, dx				  ; 光标值减去除80的余数便是取整
-					  ; 以上4行处理\r的代码
+                      ; 以上4行处理\r的代码
 
  .is_carriage_return_end:                 ; 回车符CR处理结束
    add bx, 80
    cmp bx, 2000
- .is_line_feed_end:			  ; 若是LF(\n),将光标移+80便可。  
+ .is_line_feed_end:			  ; 若是LF(\n),将光标移+80便可。
    jl .set_cursor
 
 ;屏幕行范围是0~24,滚屏的原理是将屏幕的1~24行搬运到0~23行,再将第24行用空格填充
  .roll_screen:				  ; 若超出屏幕大小，开始滚屏
-   cld  
-   mov ecx, 960				  ; 一共有2000-80=1920个字符要搬运,共1920*2=3840字节.一次搬4字节,共3840/4=960次 
+   cld
+   mov ecx, 960				  ; 一共有2000-80=1920个字符要搬运,共1920*2=3840字节.一次搬4字节,共3840/4=960次
    mov esi, 0xb80a0			  ; 第1行行首
    mov edi, 0xb8000			  ; 第0行行首
-   rep movsd				  
+   rep movsd
 
 ;;;;;;;将最后一行填充为空白
    mov ebx, 3840			  ; 最后一行首字符的第一个字节偏移= 1920 * 2
-   mov ecx, 80                            ;一行是80字符(160字节),每次清空1字符(2字节),一行需要移动80次
+   mov ecx, 80				  ;一行是80字符(160字节),每次清理1字符(2字节),一行需要移动80次
  .cls:
-   mov word [gs:ebx], 0x0720              ;0x0720是黑底白字的空格键
+   mov word [gs:ebx], 0x0720		  ;0x0720是黑底白字的空格键
    add ebx, 2
-   loop .cls 
+   loop .cls
    mov bx,1920				  ;将光标值重置为1920,最后一行的首字符.
 
- .set_cursor:   
-					  ;将光标设为bx值
+ .set_cursor:
+                      ;将光标设为bx值
 ;;;;;;; 1 先设置高8位 ;;;;;;;;
    mov dx, 0x03d4			  ;索引寄存器
    mov al, 0x0e				  ;用于提供光标位置的高8位
    out dx, al
-   mov dx, 0x03d5			  ;通过读写数据端口0x3d5来获得或设置光标位置 
+   mov dx, 0x03d5			  ;通过读写数据端口0x3d5来获得或设置光标位置
    mov al, bh
    out dx, al
 
@@ -145,10 +145,10 @@ put_char:
    mov dx, 0x03d4
    mov al, 0x0f
    out dx, al
-   mov dx, 0x03d5 
+   mov dx, 0x03d5
    mov al, bl
    out dx, al
- .put_char_done: 
+ .put_char_done:
    popad
    ret
 
@@ -170,7 +170,7 @@ put_int:
 .16based_4bits:			       ; 每4位二进制是16进制数字的1位,遍历每一位16进制数字
    and edx, 0x0000000F		       ; 解析16进制数字的每一位。and与操作后,edx只有低4位有效
    cmp edx, 9			       ; 数字0～9和a~f需要分别处理成对应的字符
-   jg .is_A2F 
+   jg .is_A2F
    add edx, '0'			       ; ascii码是8位大小。add求和操作后,edx低8位有效。
    jmp .store
 .is_A2F:
@@ -181,26 +181,26 @@ put_int:
 ;高位字符放在低地址,低位字符要放在高地址,这样和大端字节序类似,只不过咱们这里是字符序.
 .store:
 ; 此时dl中应该是数字对应的字符的ascii码
-   mov [ebx+edi], dl		       
+   mov [ebx+edi], dl
    dec edi
    shr eax, 4
-   mov edx, eax 
+   mov edx, eax
    loop .16based_4bits
 
 ;现在put_int_buffer中已全是字符,打印之前,
 ;把高位连续的字符去掉,比如把字符000123变成123
 .ready_to_print:
    inc edi			       ; 此时edi退减为-1(0xffffffff),加1使其为0
-.skip_prefix_0:  
-   cmp edi,8			       ; 若已经比较第9个字符了，表示待打印的字符串为全0 
-   je .full0 
+.skip_prefix_0:
+   cmp edi,8			       ; 若已经比较第9个字符了，表示待打印的字符串为全0
+   je .full0
 ;找出连续的0字符, edi做为非0的最高位字符的偏移
-.go_on_skip:   
+.go_on_skip:
    mov cl, [put_int_buffer+edi]
    inc edi
-   cmp cl, '0' 
+   cmp cl, '0'
    je .skip_prefix_0		       ; 继续判断下一位字符是否为字符0(不是数字0)
-   dec edi			       ;edi在上面的inc操作中指向了下一个字符,若当前字符不为'0',要恢复edi指向当前字符		       
+   dec edi			       ;edi在上面的inc操作中指向了下一个字符,若当前字符不为'0',要恢复edi指向当前字符
    jmp .put_each_num
 
 .full0:
@@ -213,5 +213,27 @@ put_int:
    mov cl, [put_int_buffer+edi]	       ; 获取下一个字符到cl寄存器
    cmp edi,8
    jl .put_each_num
+   popad
+   ret
+
+global set_cursor
+set_cursor:
+   pushad
+   mov bx, [esp+36]
+;;;;;;; 1 先设置高8位 ;;;;;;;;
+   mov dx, 0x03d4			  ;索引寄存器
+   mov al, 0x0e				  ;用于提供光标位置的高8位
+   out dx, al
+   mov dx, 0x03d5			  ;通过读写数据端口0x3d5来获得或设置光标位置
+   mov al, bh
+   out dx, al
+
+;;;;;;; 2 再设置低8位 ;;;;;;;;;
+   mov dx, 0x03d4
+   mov al, 0x0f
+   out dx, al
+   mov dx, 0x03d5
+   mov al, bl
+   out dx, al
    popad
    ret

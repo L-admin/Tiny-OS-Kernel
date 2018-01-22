@@ -3,6 +3,7 @@
 #include "../thread/thread.h"
 
 void k_thread_a(void* arg);
+void k_thread_b(void* arg);
 
 int main(void)
 {
