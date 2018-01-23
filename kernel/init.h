@@ -3,7 +3,10 @@
 
 #include "../lib/kernel/print.h"
 #include "interrupt.h"
+
 #include "../device/timer.h"
+#include "../device/keyboard.h"
+
 #include "memory.h"
 #include "../thread/thread.h"
 

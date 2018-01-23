@@ -5,7 +5,6 @@
 extern idt_table     ;idt_table是interrupt.c中注册的中断处理程序指针数组
 
 
-
 section .data
 global intr_entry_table
 intr_entry_table:
@@ -86,5 +85,24 @@ VECTOR 0x1d, ERROR_CODE
 VECTOR 0x1e, ERROR_CODE
 VECTOR 0x1f, ZERO 
 
-VECTOR 0x20, ZERO
+
+;;;;;;;;; 8259A中的全部中断 ;;;;;;;;;;
+
+VECTOR 0x20, ZERO	; 时钟中断对应的入口
+VECTOR 0x21, ZERO	; 键盘中断对应的入口
+VECTOR 0x22, ZERO	; 用于级联
+VECTOR 0x23, ZERO	; 串口2对应的入口
+VECTOR 0x24, ZERO	; 串口1对应的入口
+VECTOR 0x25, ZERO	; 并口2对应的入口
+VECTOR 0x26, ZERO	; 软盘对应的入口
+VECTOR 0x27, ZERO	; 并口1对应的入口
+VECTOR 0x28, ZERO	; 实时时钟对应的入口
+VECTOR 0x29, ZERO	; 重定向
+VECTOR 0x2a, ZERO	; 保留
+VECTOR 0x2b, ZERO	; 保留
+VECTOR 0x2c, ZERO	; PS/2 鼠标
+VECTOR 0x2d, ZERO	; fpu 浮点单元异常
+VECTOR 0x2e, ZERO	; 硬盘
+VECTOR 0x2f, ZERO	; 保留
+
 

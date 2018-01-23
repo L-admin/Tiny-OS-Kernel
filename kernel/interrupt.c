@@ -1,9 +1,6 @@
 #include "interrupt.h"
 
 
-
-
-
 static void pic_init();
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
 static void idt_desc_init();
@@ -17,42 +14,48 @@ static void exception_init();
 static void pic_init()
 {
 
-   /* 初始化主片 */
-   outb (PIC_M_CTRL, 0x11);   // ICW1: 边沿触发,级联8259, 需要ICW4.
-   outb (PIC_M_DATA, 0x20);   // ICW2: 起始中断向量号为0x20,也就是IR[0-7] 为 0x20 ~ 0x27.
-   outb (PIC_M_DATA, 0x04);   // ICW3: IR2接从片.
-   outb (PIC_M_DATA, 0x01);   // ICW4: 8086模式, 正常EOI
+    /* 初始化主片 */
+    outb (PIC_M_CTRL, 0x11);   // ICW1: 边沿触发,级联8259, 需要ICW4.
+    outb (PIC_M_DATA, 0x20);   // ICW2: 起始中断向量号为0x20,也就是IR[0-7] 为 0x20 ~ 0x27.
+    outb (PIC_M_DATA, 0x04);   // ICW3: IR2接从片.
+    outb (PIC_M_DATA, 0x01);   // ICW4: 8086模式, 正常EOI
 
-   /* 初始化从片 */
-   outb (PIC_S_CTRL, 0x11);   // ICW1: 边沿触发,级联8259, 需要ICW4.
-   outb (PIC_S_DATA, 0x28);	  // ICW2: 起始中断向量号为0x28,也就是IR[8-15] 为 0x28 ~ 0x2F.
-   outb (PIC_S_DATA, 0x02);	  // ICW3: 设置从片连接到主片的IR2引脚
-   outb (PIC_S_DATA, 0x01);	  // ICW4: 8086模式, 正常EOI
+    /* 初始化从片 */
+    outb (PIC_S_CTRL, 0x11);   // ICW1: 边沿触发,级联8259, 需要ICW4.
+    outb (PIC_S_DATA, 0x28);	  // ICW2: 起始中断向量号为0x28,也就是IR[8-15] 为 0x28 ~ 0x2F.
+    outb (PIC_S_DATA, 0x02);	  // ICW3: 设置从片连接到主片的IR2引脚
+    outb (PIC_S_DATA, 0x01);	  // ICW4: 8086模式, 正常EOI
 
-   /* 打开主片上IR0,也就是目前只接受时钟产生的中断 */
-   outb (PIC_M_DATA, 0xfe);
-   outb (PIC_S_DATA, 0xff);
+    /* 打开主片上IR0,也就是目前只接受时钟产生的中断 */
+    //   outb (PIC_M_DATA, 0xfe);
+    //   outb (PIC_S_DATA, 0xff);
 
-   put_str("   pic_init done\n");
+
+    /* 测试键盘，只打开键盘中断，其余关闭 */
+    outb (PIC_M_DATA, 0xfd);
+    outb (PIC_S_DATA, 0xff);
+
+
+    put_str("   pic_init done\n");
 }
 
 
 /*
  * 创建中断门描述符
  */
-/////////////////////////////// 中断门描述符 /////////////////////////////
-// 31-16                          15 14-13  12  11-8  7-0
-// 中断处理程序在目标段内偏移量31-16位  P   DPL   S   TYPE  全0     ; 高32位
+/////////////////////////////// 中断门描述符 //////////////////////////////
+// 31-16                           15 14-13  12  11-8  7-0
+// 中断处理程序在目标段内偏移量31-16位   P   DPL   S   TYPE  全0       ; 高32位
 //
 // 31-16                           15-0
-// 中断处理程序目标代码段段描述符选择子   中断处理程序在目标段内偏移量15-0位                                            ; 低32位
-////////////////////////////////////////////////////////////////////
+// 中断处理程序目标代码段段描述符选择子   中断处理程序在目标段内偏移量15-0位  ; 低32位
+/////////////////////////////////////////////////////////////////////////
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
 {
     p_gdesc->func_offset_low_word = (uint32_t)function & 0x0000FFFF; // 取出低16位
     p_gdesc->selector = SELECTOR_K_CODE;    // 0000_0000_0000_1000b
     p_gdesc->dcount = 0;                    // 0000_0000
-    p_gdesc->attribute = attr;
+    p_gdesc->attribute = attr;              // 1000_1110b 或 1110_1110b  (DPL不同)
     p_gdesc->func_offset_high_word = (uint32_t)function & 0xFFFF0000;   // 取出高16位
 }
 
