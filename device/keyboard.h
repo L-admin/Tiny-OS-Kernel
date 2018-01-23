@@ -5,6 +5,7 @@
 #include "../kernel/interrupt.h"
 #include "../lib/kernel/io.h"
 #include "../lib/stdint.h"
+#include "../kernel/global.h"
 
 
 #define KBD_BUF_PORT 0x60   // 键盘buffer 寄存器端口号为0x60
