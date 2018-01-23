@@ -1,9 +1,6 @@
 #include "keyboard.h"
 
 
-
-
-
 /* 以下变量记录一些特殊键是否被按下的状态 */
 static bool ctrl_status;
 static bool shift_status;
@@ -80,7 +77,7 @@ static char keymap[][2] = {
 /*其它按键暂不处理*/
 };
 
-static void intr_keyboard_hadnler();
+static void intr_keyboard_handler();
 
 /*
  * 键盘中断处理程序, 目前只处理主键盘
@@ -110,7 +107,6 @@ static void intr_keyboard_handler()
         ext_scancode = false;   // 关闭 e0 标价
     }
 
-
     break_code = ((scancode & 0x0080) != 0);   // 断码和通码的区别就是扫描码第8位的值，断码第8位为1，通码为0
 
     if (break_code)     // 若为断码
@@ -135,7 +131,7 @@ static void intr_keyboard_handler()
         bool shift = false;
         /* 分2次处理：将字母和其他分开来，因为 caps 对于字母来说和 shift是一样的。 */
         /* 但对于非字母来说，是不一样的。 */
-        if ( (scancode < 0x0e) || (scancode == 0x29) ||
+        if ( (scancode < 0x0e)  || (scancode == 0x29) ||
              (scancode == 0x1a) || (scancode == 0x1b) ||
              (scancode == 0x2b) || (scancode == 0x27) ||
              (scancode == 0x28) || (scancode == 0x33) ||
