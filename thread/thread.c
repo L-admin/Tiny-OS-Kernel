@@ -2,6 +2,8 @@
 
 static struct list_elem* thread_tag; // 用于保存队列中的当前运行的线程结点
 
+
+static void kernel_thread(thread_func* function, void* func_arg);
 static void make_main_thread();
 
 
@@ -43,7 +45,9 @@ void thread_create(struct task_struct* pthread, thread_func function,
 }
 
 
-/* 初始化线程基本信息 */
+/*
+ * 初始化线程基本信息
+ */
 void init_thread(struct task_struct* pthread, char*name, int prio)
 {
     memset(pthread, 0, sizeof(*pthread));
@@ -140,6 +144,54 @@ void schedule()
 
     switch_to(cur, next);
 }
+
+
+/*
+ * 当前线程将自己标记阻塞，标志其状态为 stat
+ * TASK_BLOCKED TASK_WAITING TASK_HANGING 都为不可运行态
+ */
+void thread_block(enum task_status stat)
+{
+    ASSERT(((stat == TASK_BLOCKED) ||
+            (stat == TASK_WAITING) ||
+            (stat == TASK_HANGING)));
+
+    enum intr_status old_status = intr_disable();
+
+    struct task_struct* cur_thread = running_thread();
+    cur_thread->status = stat;
+
+    schedule();
+
+    intr_set_status(old_status);  // 调用 schedule() 后，这行代码便没有机会运行
+}
+
+/*
+ * 将线程pthread解除阻塞
+ */
+void thread_unblock(struct task_struct* pthread)
+{
+    ASSERT(((pthread->status == TASK_BLOCKED) ||
+            (pthread->status == TASK_WAITING) ||
+            (pthread->status == TASK_HANGING)));
+
+    enum intr_status old_status = intr_disable();
+
+    if (pthread->status != TASK_READY)
+    {
+        ASSERT(!elem_find(&thread_ready_list, &pthread->general_tag));
+        if (elem_find(&thread_ready_list, &pthread->general_tag))
+            PANIC("thread_unblock: blocked thread in ready_list\n");
+
+        pthread->status = TASK_READY;
+        list_push(&thread_ready_list, &pthread->general_tag);    // 放到就绪队列的最前面,使其尽快得到调度
+    }
+
+    intr_set_status(old_status);
+}
+
+
+
 
 
 /* 初始化线程环境 */

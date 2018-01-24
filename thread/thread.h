@@ -112,16 +112,18 @@ struct list thread_all_list;        // 所有任务队列, 包括就绪的，阻
 
 
 
-extern void switch_to(struct task_struct* cur, struct task_struct* next);
-
 struct task_struct* running_thread();
 
 void init_thread(struct task_struct* pthread, char*name, int prio);
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
+void threads_init();
 
 void schedule();
-void threads_init();
+extern void switch_to(struct task_struct* cur, struct task_struct* next);
+
+void thread_block(enum task_status stat);
+void thread_unblock(struct task_struct* pthread);
 
 
 #endif // THREAD_H
