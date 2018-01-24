@@ -191,9 +191,6 @@ void thread_unblock(struct task_struct* pthread)
 }
 
 
-
-
-
 /* 初始化线程环境 */
 void threads_init()
 {

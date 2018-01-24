@@ -111,7 +111,6 @@ struct list thread_all_list;        // 所有任务队列, 包括就绪的，阻
 
 
 
-
 struct task_struct* running_thread();
 
 void init_thread(struct task_struct* pthread, char*name, int prio);
