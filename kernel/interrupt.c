@@ -27,13 +27,13 @@ static void pic_init()
     outb (PIC_S_DATA, 0x01);	  // ICW4: 8086模式, 正常EOI
 
     /* 打开主片上IR0,也就是目前只接受时钟产生的中断 */
-    //   outb (PIC_M_DATA, 0xfe);
-    //   outb (PIC_S_DATA, 0xff);
+       outb (PIC_M_DATA, 0xfe);
+       outb (PIC_S_DATA, 0xff);
 
 
     /* 测试键盘，只打开键盘中断，其余关闭 */
-    outb (PIC_M_DATA, 0xfd);
-    outb (PIC_S_DATA, 0xff);
+//    outb (PIC_M_DATA, 0xfd);
+//    outb (PIC_S_DATA, 0xff);
 
 
     put_str("   pic_init done\n");
