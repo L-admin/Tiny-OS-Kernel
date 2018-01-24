@@ -66,8 +66,9 @@ $(BUILD_DIR)/list.o: lib/kernel/list.c lib/kernel/list.h \
 
 $(BUILD_DIR)/keyboard.o: device/keyboard.c device/keyboard.h  \
         lib/kernel/print.h lib/stdint.h kernel/interrupt.h lib/kernel/io.h \
-		/kernel/global.h
+		kernel/global.h
 	$(CC) $(CFLAGS) $< -o $@
+
 
 ##############  汇编代码编译  ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
@@ -78,6 +79,7 @@ $(BUILD_DIR)/print.o: lib/kernel/print.S
 
 $(BUILD_DIR)/switch.o: thread/switch.S
 	$(AS) $(ASFLAGS) $< -o $@
+
 
 ##############  链接所有目标文件  #############
 $(BUILD_DIR)/kernel.bin: $(OBJS)
