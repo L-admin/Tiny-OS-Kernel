@@ -1,7 +1,7 @@
 #ifndef __USERPROG_TSS_H
 #define __USERPROG_TSS_H
 
-#include "../thread/thread.h"
+
 #include "../lib/stdint.h"
 #include "../lib/kernel/print.h"
 #include "../lib/string.h"

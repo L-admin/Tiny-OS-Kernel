@@ -1,10 +1,10 @@
 #include "tss.h"
 
 
-static struct gdt_desc make_gdt_desc(uint32_t* desc_addr, uint32_t limit,uint8_t attr_low, uint8_t attr_high);
-
-
 static struct t_tss tss;
+
+
+static struct gdt_desc make_gdt_desc(uint32_t* desc_addr, uint32_t limit,uint8_t attr_low, uint8_t attr_high);
 
 
 /* 创建gdt描述符 */
