@@ -34,7 +34,6 @@ struct pool kernel_pool;
 struct pool user_pool;
 
 
-
 /* 内存池标记，用于判断用哪个内存池 */
 enum pool_flags
 {

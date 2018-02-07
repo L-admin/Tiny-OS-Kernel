@@ -140,6 +140,14 @@ static void exception_init()
     intr_name[19] = "#XF SIMD Floating-Point Exception";
 }
 
+/*
+ * 在中断处理程序数组第vector_no个元素中注册中断处理函数
+ */
+void register_handler(uint8_t vector_no, intr_handler function) // intr_handler 函数指针
+{
+    idt_table[vector_no] = function;
+}
+
 
 /*
  * 获取当前中断状态
@@ -192,14 +200,6 @@ enum intr_status intr_disable()
     return old_status;
 }
 
-
-/*
- * 在中断处理程序数组第vector_no个元素中注册中断处理函数
- */
-void register_handler(uint8_t vector_no, intr_handler function) // intr_handler 函数指针
-{
-    idt_table[vector_no] = function;
-}
 
 
 void idt_init()

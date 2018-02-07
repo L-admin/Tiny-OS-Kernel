@@ -7,7 +7,6 @@ static void kernel_thread(thread_func* function, void* func_arg);
 static void make_main_thread();
 
 
-
 /* 获取当前线程PCB */
 struct task_struct* running_thread()
 {
@@ -190,6 +189,26 @@ void thread_unblock(struct task_struct* pthread)
     intr_set_status(old_status);
 }
 
+/*
+ * 主动让出 CPU，换其他线程运行
+ */
+void thread_yield()
+{
+    enum intr_status old_status = intr_disable();
+
+    struct task_struct* cur = running_thread();
+
+    ASSERT(!elem_find(&thread_ready_list, &cur->general_tag));
+
+    cur->status = TASK_READY;
+    list_append(&thread_ready_list, &(cur->general_tag));
+
+    schedule();
+
+    intr_set_status(old_status);
+}
+
+
 
 /* 初始化线程环境 */
 void threads_init()
@@ -200,6 +219,8 @@ void threads_init()
 
     /* 将当前main函数创建为线程 */
     make_main_thread();
+
+    // todo 创建idle 线程
 
     put_str("thread_init_done\n");
 }

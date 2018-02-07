@@ -34,8 +34,9 @@ void sema_up(struct semaphore* psema)
 
     if (!list_empty(&(psema->waiters)))
     {
-        struct task_struct* thread_blocked = elem2entry(struct task_struct, general_tag, list_pop(&psema->waiters));;
-        thread_unblock(thread_blocked);     // 这里解除阻塞，并不是立即可以运行，而是放到就绪队列里面，能够再次被调度
+        struct task_struct* thread_blocked =
+            elem2entry(struct task_struct, general_tag, list_pop(&psema->waiters));
+        thread_unblock(thread_blocked); // 这里解除阻塞，并不是立即可以运行，而是放到就绪队列里面，能够再次被调度
     }
 
     psema->value++;
@@ -43,7 +44,6 @@ void sema_up(struct semaphore* psema)
 
     intr_set_status(old_status);
 }
-
 
 
 

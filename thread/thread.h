@@ -105,10 +105,13 @@ struct task_struct
 };
 
 
-struct task_struct* main_thread;    // 主线程 PCB
+
 struct list thread_ready_list;      // 就绪队列, 就绪队列只存储准备运行的线程
 struct list thread_all_list;        // 所有任务队列, 包括就绪的，阻塞的，正在执行的。
 
+
+struct task_struct* main_thread;    // 主线程
+struct task_struct* idle_thread;    // idle线程
 
 
 struct task_struct* running_thread();
@@ -123,6 +126,6 @@ extern void switch_to(struct task_struct* cur, struct task_struct* next);
 
 void thread_block(enum task_status stat);
 void thread_unblock(struct task_struct* pthread);
-
+void thread_yield();
 
 #endif // THREAD_H
