@@ -11,7 +11,7 @@
 **
 **  31-16   15-0
 **  段基址   段界限                                               ; 低32位
-//**********************************************************************/
+**********************************************************************/
 
 #define DESC_G_4K   1   // 段界限粒度，1表示4K
 
@@ -39,8 +39,9 @@
 
 
 
-// 1100_0000b  P(1) DPL(2) S(1) TYPE(4)
+// 1100_0000b  G(1) D/B(1) L(1) AVL(1) 0000
 #define GDT_ATTR_HIGH		 ((DESC_G_4K << 7) + (DESC_D_32 << 6) + (DESC_L << 5) + (DESC_AVL << 4))
+
 // 1111_1000b  P(1) DPL(2) S(1) TYPE(4)
 #define GDT_CODE_ATTR_LOW_DPL3	 ((DESC_P << 7) + (DESC_DPL_3 << 5) + (DESC_S_CODE << 4) + DESC_TYPE_CODE)
 // 1111_1000b  P(1) DPL(2) S(1) TYPE(4)
@@ -73,6 +74,8 @@
 #define TSS_ATTR_LOW ((DESC_P << 7) + (DESC_DPL_0 << 5) + (DESC_S_SYS << 4) + DESC_TYPE_TSS)
 #define SELECTOR_TSS ((4 << 3) + (TI_GDT << 2 ) + RPL0)
 
+
+/* 段描述符GDT */
 struct gdt_desc
 {
     uint16_t limit_low_word;        // 段界限 0-15
