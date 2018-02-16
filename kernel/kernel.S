@@ -34,21 +34,18 @@ section .data
 %endmacro
 
 
-
-
 section .text
 global intr_exit
 intr_exit:
     ; 恢复上下文环境
-    add esp, 4  ; 跳过中断号
-    popad
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    add esp, 4  ; 跳过error_code
-    iretd
-
+	add esp, 4  ; 跳过中断号
+	popad
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	add esp, 4  ; 跳过error_code
+	iretd
 
 
 VECTOR 0x00, ZERO
@@ -85,9 +82,7 @@ VECTOR 0x1d, ERROR_CODE
 VECTOR 0x1e, ERROR_CODE
 VECTOR 0x1f, ZERO 
 
-
 ;;;;;;;;; 8259A中的全部中断 ;;;;;;;;;;
-
 VECTOR 0x20, ZERO	; 时钟中断对应的入口
 VECTOR 0x21, ZERO	; 键盘中断对应的入口
 VECTOR 0x22, ZERO	; 用于级联
@@ -105,4 +100,42 @@ VECTOR 0x2d, ZERO	; fpu 浮点单元异常
 VECTOR 0x2e, ZERO	; 硬盘
 VECTOR 0x2f, ZERO	; 保留
 
+
+
+
+
+
+;;;;;;;;;; 0x80号中断		;;;;;;;;;;;
+[bits 32]
+
+extern syscall_table
+
+
+section .text
+
+global syscall_handler
+syscall_handler:
+    ; 1 保存上下文环境
+	push 0	; 压入0, 使栈中格式统一
+
+    push ds
+	push es
+	push fs
+	push gs
+	pushad  ; PUSHAD指令压入32位寄存器,其入栈顺序是: EAX,ECX,EDX
+
+    push 0x80	; 压入中断号
+
+    ; 2 为系统调用子功能传入参数
+	push edx	; 系统调用中的第3个参数
+	push ecx	; 系统调用中的第2个参数
+	push ebx	; 系统调用中的第1个参数
+
+    ; 3 调用子功能处理函数
+	call [syscall_table + eax*4]
+	add esp, 12 ; 跨过上面的三个参数
+
+    ; 4 将call调用后的返回值存入待当前内核栈中eax的位置
+	mov [esp + 8*4], eax
+	jmp intr_exit
 

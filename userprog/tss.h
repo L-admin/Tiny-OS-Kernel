@@ -2,10 +2,12 @@
 #define __USERPROG_TSS_H
 
 
+
 #include "../lib/stdint.h"
 #include "../lib/kernel/print.h"
 #include "../lib/string.h"
 #include "../kernel/global.h"
+
 
 struct t_tss
 {
@@ -46,6 +48,10 @@ struct t_tss
     uint32_t io_base;
 };
 
+
+void update_tss_esp(struct task_struct* pthread);
 void tss_init();
+
+
 
 #endif

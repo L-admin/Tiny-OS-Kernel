@@ -17,6 +17,7 @@ bool list_empty(struct list* plist)
     return plist->head.next == &(plist->tail);
 }
 
+
 /* 返回链表长度 */
 uint32_t list_len(struct list* plist)
 {
@@ -36,8 +37,7 @@ uint32_t list_len(struct list* plist)
 /* 把链表elem插入在元素before之前 */
 void list_insert_before(struct list_elem* before, struct list_elem* elem)
 {
-    // 实现原子操作，关掉中断
-    enum intr_status old_status = intr_disable();
+    enum intr_status old_status = intr_disable();   // 实现原子操作，关掉中断
 
     before->prev->next = elem;
 
@@ -49,11 +49,13 @@ void list_insert_before(struct list_elem* before, struct list_elem* elem)
     intr_set_status(old_status);
 }
 
+
 /* 添加元素到列表队首,类似push_front操作 */
 void list_push(struct list* plist, struct list_elem* elem)
 {
-    list_insert_before(plist->head.next, elem);
+    list_insert_before(plist->head.next, elem);     // 第一个元素是 head.next
 }
+
 
 /* 追加元素到链表队尾,类似队列的先进先出操作 */
 void list_append(struct list* plist, struct list_elem* elem)
@@ -61,11 +63,12 @@ void list_append(struct list* plist, struct list_elem* elem)
     list_insert_before(&(plist->tail), elem);
 }
 
+
 /* 使元素pelem脱离链表 */
 void list_remove(struct list_elem* pelem)
 {
-    // 实现原子操作，关掉中断
-    enum intr_status old_status = intr_disable();
+
+    enum intr_status old_status = intr_disable();   // 实现原子操作，关掉中断
 
     pelem->prev->next = pelem->next;
     pelem->next->prev = pelem->prev;
@@ -82,6 +85,7 @@ struct list_elem* list_pop(struct list* plist)
     return elem;
 }
 
+
 /* 从链表中查找元素obj_elem,成功时返回true,失败时返回false */
 bool elem_find(struct list* plist, struct list_elem* obj_elem)
 {
@@ -90,7 +94,7 @@ bool elem_find(struct list* plist, struct list_elem* obj_elem)
     while(elem != &(plist->tail))
     {
         if (elem == obj_elem)
-                return true;
+            return true;
         elem = elem->next;
     }
 

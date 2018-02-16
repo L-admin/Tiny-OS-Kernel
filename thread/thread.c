@@ -1,6 +1,6 @@
 #include "thread.h"
 
-static struct list_elem* thread_tag; // 用于保存队列中的当前运行的线程结点
+static struct list_elem* thread_tag; // 用于指明当前运行的线程结点
 
 
 static void kernel_thread(thread_func* function, void* func_arg);
@@ -126,7 +126,7 @@ void schedule()
 
         cur->ticks = cur->priority;
         cur->status = TASK_READY;
-        list_append(&thread_ready_list, &cur->general_tag);    // 加入就绪队列
+        list_append(&thread_ready_list, &(cur->general_tag));    // 加入就绪队列
     }
     else
     {

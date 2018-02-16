@@ -27,6 +27,11 @@ static struct gdt_desc make_gdt_desc(uint32_t* desc_addr, uint32_t limit,
 }
 
 
+void update_tss_esp(struct task_struct* pthread)
+{
+   tss.esp0 = (uint32_t*)((uint32_t)pthread + PG_SIZE);
+}
+
 
 /* 在 gdt 中创建 tss 并重新加载gdt */
 void tss_init()

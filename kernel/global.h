@@ -1,6 +1,8 @@
 #ifndef __KERNEL_GLOBAL_H
 #define __KERNEL_GLOBAL_H
 
+
+
 #include "../lib/stdint.h"
 
 
@@ -58,13 +60,13 @@
 #define TI_LDT  1
 
 /***************** 构造选择子 **************/
-#define SELECTOR_K_CODE     ((1 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0000_1000b 第1个
-#define SELECTOR_K_DATA     ((2 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0001_0000b 第2个
-#define SELECTOR_K_STACK    SELECTOR_K_DATA                   // 0000_0000_0001_0000b 第3个
-#define SELECTOR_K_GS	    ((3 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0001_1000b 第4个
-#define SELECTOR_U_CODE	    ((5 << 3) + (TI_GDT << 2) + RPL3) // 0000_0000_0010_1011b 第5个
-#define SELECTOR_U_DATA	    ((6 << 3) + (TI_GDT << 2) + RPL3) // 0000_0000_0011_0011b 第6个
-#define SELECTOR_U_STACK    SELECTOR_U_DATA                   // 0000_0000_0011_0011b 第7个
+#define SELECTOR_K_CODE     ((1 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0000_1000b
+#define SELECTOR_K_DATA     ((2 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0001_0000b
+#define SELECTOR_K_STACK    SELECTOR_K_DATA                   // 0000_0000_0001_0000b
+#define SELECTOR_K_GS	    ((3 << 3) + (TI_GDT << 2) + RPL0) // 0000_0000_0001_1000b
+#define SELECTOR_U_CODE	    ((5 << 3) + (TI_GDT << 2) + RPL3) // 0000_0000_0010_1011b
+#define SELECTOR_U_DATA	    ((6 << 3) + (TI_GDT << 2) + RPL3) // 0000_0000_0011_0011b
+#define SELECTOR_U_STACK    SELECTOR_U_DATA                   // 0000_0000_0011_0011b s
 
 
 /***************** TSS 描述符属性 ***********/
@@ -74,17 +76,6 @@
 #define TSS_ATTR_LOW ((DESC_P << 7) + (DESC_DPL_0 << 5) + (DESC_S_SYS << 4) + DESC_TYPE_TSS)
 #define SELECTOR_TSS ((4 << 3) + (TI_GDT << 2 ) + RPL0)
 
-
-/* 段描述符GDT */
-struct gdt_desc
-{
-    uint16_t limit_low_word;        // 段界限 0-15
-    uint16_t base_low_word;         // 段基址 0-15
-    uint8_t  base_mid_byte;         // 段基址 16-23
-    uint8_t  attr_low_byte;         // TYPE S DPL P
-    uint8_t  limit_high_attr_high;  // 段界限16-20 AVL L D/B G
-    uint8_t  base_high_byte;        // 段基址 24-31
-};
 
 
 /********************* IDT描述符属性 *********************/
@@ -105,11 +96,65 @@ struct gdt_desc
 
 
 
+/* 段描述符GDT */
+struct gdt_desc
+{
+    uint16_t limit_low_word;        // 段界限 0-15
+    uint16_t base_low_word;         // 段基址 0-15
+    uint8_t  base_mid_byte;         // 段基址 16-23
+    uint8_t  attr_low_byte;         // TYPE S DPL P
+    uint8_t  limit_high_attr_high;  // 段界限16-20 AVL L D/B G
+    uint8_t  base_high_byte;        // 段基址 24-31
+};
+
+
+
+
+/*--------------------------------------------------------------*/
+/*          Intel 8086 Eflags Register                          */
+/*--------------------------------------------------------------*/
+/*
+*     15|14|13|12|11|10|F|E|D C|B|A|9|8|7|6|5|4|3|2|1|0|
+*      |  |  |  |  |  | | |  |  | | | | | | | | | | | '---  CF……Carry Flag
+*      |  |  |  |  |  | | |  |  | | | | | | | | | | '---  1 MBS
+*      |  |  |  |  |  | | |  |  | | | | | | | | | '---  PF……Parity Flag
+*      |  |  |  |  |  | | |  |  | | | | | | | | '---  0
+*      |  |  |  |  |  | | |  |  | | | | | | | '---  AF……Auxiliary Flag
+*      |  |  |  |  |  | | |  |  | | | | | | '---  0
+*      |  |  |  |  |  | | |  |  | | | | | '---  ZF……Zero Flag
+*      |  |  |  |  |  | | |  |  | | | | '---  SF……Sign Flag
+*      |  |  |  |  |  | | |  |  | | | '---  TF……Trap Flag
+*      |  |  |  |  |  | | |  |  | | '---  IF……Interrupt Flag
+*      |  |  |  |  |  | | |  |  | '---  DF……Direction Flag
+*      |  |  |  |  |  | | |  |  '---  OF……Overflow flag
+*      |  |  |  |  |  | | |  '----  IOPL……I/O Privilege Level
+*      |  |  |  |  |  | | '-----  NT……Nested Task Flag
+*      |  |  |  |  |  | '-----  0
+*      |  |  |  |  |  '-----  RF……Resume Flag
+*      |  |  |  |  '------  VM……Virtual Mode Flag
+*      |  |  |  '-----  AC……Alignment Check
+*      |  |  '-----  VIF……Virtual Interrupt Flag
+*      |  '-----  VIP……Virtual Interrupt Pending
+*      '-----  ID……ID Flag
+*
+*
+**********************************************************/
+
+
+#define EFLAGS_MBS	(1 << 1)	// 此项必须要设置
+#define EFLAGS_IF_1	(1 << 9)	// if为1,开中断
+#define EFLAGS_IF_0	0		// if为0,关中断
+#define EFLAGS_IOPL_3	(3 << 12)	// IOPL3,用于测试用户程序在非系统调用下进行IO
+#define EFLAGS_IOPL_0	(0 << 12)	// IOPL0
+
+
+
 #define NULL ((void*)0)
 #define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
 #define bool int
 #define true 1
 #define false 0
 
+#define PG_SIZE 4096
 
 #endif // GLOBAL_H

@@ -1,6 +1,11 @@
 #include "interrupt.h"
 
 
+
+static struct gate_desc idt[IDT_DESC_CNT];
+
+
+/************** 静态函数声明 ***************/
 static void pic_init();
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
 static void idt_desc_init();
@@ -8,9 +13,7 @@ static void general_init_hadnler(uint8_t vec_nr);
 static void exception_init();
 
 
-/*
- * 初始化可编程中断控制器8259A
- */
+/* 初始化可编程中断控制器8259A */
 static void pic_init()
 {
 
@@ -27,8 +30,8 @@ static void pic_init()
     outb (PIC_S_DATA, 0x01);	  // ICW4: 8086模式, 正常EOI
 
     /* 打开主片上IR0,也就是目前只接受时钟产生的中断 */
-       outb (PIC_M_DATA, 0xfe);
-       outb (PIC_S_DATA, 0xff);
+    outb (PIC_M_DATA, 0xfe);
+    outb (PIC_S_DATA, 0xff);
 
 
     /* 测试键盘，只打开键盘中断，其余关闭 */
@@ -60,21 +63,20 @@ static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler 
 }
 
 
-/*
- * 初始化中断描述符表
- */
+/* 初始化中断描述符表 */
 static void idt_desc_init()
 {
     int i;
     for (i = 0; i < IDT_DESC_CNT; i++)
         make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);    // IDT_DESC_ATTR_DPL0 = 1000_1110b
+    /* 单独处理系统调用，系统调用对应的中断门DPL=3,中断处理程序为syscall_handler */
+    make_idt_desc(&idet[IDT_DESC_CNT-1], IDT_DESC_ATTR_DPL3, syscall_handler);
+
     put_str("   idt_desc_init done\n");
 }
 
 
-/*
- * 默认中断处理函数
- */
+/* 默认中断处理函数 */
 static void general_init_hadnler(uint8_t vec_nr)
 {
     if (vec_nr == 0x27 || vec_nr == 0x2f)
@@ -107,9 +109,7 @@ static void general_init_hadnler(uint8_t vec_nr)
 }
 
 
-/*
- * 完成中断函数注册和异常名称注册
- */
+/* 完成中断函数注册和异常名称注册 */
 static void exception_init()
 {
     int i;
@@ -140,9 +140,8 @@ static void exception_init()
     intr_name[19] = "#XF SIMD Floating-Point Exception";
 }
 
-/*
- * 在中断处理程序数组第vector_no个元素中注册中断处理函数
- */
+
+/* 在中断处理程序数组第vector_no个元素中注册中断处理函数 */
 void register_handler(uint8_t vector_no, intr_handler function) // intr_handler 函数指针
 {
     idt_table[vector_no] = function;
